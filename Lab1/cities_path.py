@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 # !/usr/bin/env python
 """Algoritmos greedy e A*."""
-from pprint import pprint
 from graphics import *
 from Queue import PriorityQueue
 import copy
 import math
-import sys
 
 
 def print_map():
@@ -76,17 +74,26 @@ def distance(id_city1, id_city2):
 
 def find_path_a(id_origin, id_destination):
     u"""Encontra o menor caminho usando A*."""
+    # Fila de prioridade - algoritmo guloso
     id_current = id_origin
-    total_distance = 0
-    solution.append(id_current)
-    while id_current != id_destination:
-        # Resetando variáveis
-        id_next_city = 0
-        min_distance = sys.maxint
+    queue = PriorityQueue()
+    queue.put((
+        distance(id_origin, id_destination),
+        id_origin, [id_current], [id_current]
+    ))
+
+    while not queue.empty():
+        # Pega a tupla com menor distância estimada
+        tupla = queue.get()
+        (_, id_current, visited, solution) = tupla
+        solution = copy.copy(solution)
+
         # Procura caminhos a partir da cidade atual
         for i, id_city in enumerate(graph[id_current]):
-            if i < 3 or id_city in solution:
+            # Se a cidade já foi visitada, não é incluída
+            if i < 3 or id_city in visited:
                 continue
+
             # Distância da cidade atual até a adjacente
             current_city_distance = distance(id_current, id_city)
             # Estima distância da cidade adjacente até o destino
@@ -95,20 +102,13 @@ def find_path_a(id_origin, id_destination):
             estimated_current_distance =\
                 current_city_distance + city_destination_distance
 
-            # Verifica se o caminho é melhor que os já verificados
-            if estimated_current_distance < min_distance:
-                min_distance = estimated_current_distance
-                id_next_city = id_city
+            visited.append(id_city)
+            solution.append(id_city)
+            queue.put((estimated_current_distance, id_city, visited, solution))
 
-        print id_current
-        # Determina a melhor cidade adjacente para prosseguir viagem
-        id_current = id_next_city
-        total_distance += min_distance
-        solution.append(id_current)
-
-    # Exibe o resultado do menor caminho usando A*
-    print "Menor distância = " + total_distance
-    pprint(solution)
+            # Verifica se o destino foi alcançado
+            if id_city == id_destination:
+                return solution
 
 
 def find_path_greedy(id_origin, id_destination):
@@ -146,7 +146,8 @@ def find_path_greedy(id_origin, id_destination):
 def find_path(id_origin, id_destination):
     u"""Encontra o menor caminho usando algoritmo."""
     global path
-    path = find_path_greedy("202", "601")
+    # path = find_path_greedy("202", "601")
+    path = find_path_a("202", "601")
     # Calcula a menor distância do caminho solução
     id_current = id_origin
     total_distance = 0
@@ -165,7 +166,7 @@ graph = {}
 # Rotina main()
 print "*************************************"
 print "*                                   *"
-print "*            Algoritmo A*           *"
+print "*       Algoritmos Greedy & A*      *"
 print "*                                   *"
 print "*************************************"
 read_map('Uruguay.csv')
