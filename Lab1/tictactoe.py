@@ -6,7 +6,42 @@ from graphics import *
 import copy
 
 
-def tic_tac_toe_o(win, p1x, p1y):
+def create_board():
+    u"""Cria o tabuleiro de jogo."""
+    global win
+    global boxsize
+    global squares
+
+    windowsize = 600
+    squares = 3
+    boxsize = windowsize / squares
+
+    # Desenhando tabuleiro
+    win = GraphWin("Tic Tac Toe", windowsize, windowsize)
+    for i in range(squares - 1):
+        position = (boxsize) * (i + 1)
+        Line(Point(0, position), Point(windowsize, position)).draw(win)
+        Line(Point(position, 0), Point(position, windowsize)).draw(win)
+
+
+def tic_tac_toe_victory(player):
+    u"""Exibe mensagem de vitória na tela."""
+    victory = Text(Point(300, 300), "Hi")
+    if player is '-':
+        victory.setText("Deu velha!")
+        print("Deu velha!")
+    else:
+        victory.setText("Player " + player + " venceu!")
+        print("Player " + player + " venceu!")
+
+    victory.setSize(36)
+    victory.draw(win)
+
+    win.getMouse()
+    win.close()
+
+
+def tic_tac_toe_o(p1x, p1y):
     """Draw tic_tac_toe_o.
 
     Circle the winner's photo.
@@ -15,7 +50,6 @@ def tic_tac_toe_o(win, p1x, p1y):
     - winner_center: the center of the winner's picture (as a Point).
     """
     board[p1y][p1x] = 'o'
-    pprint(board)
     circle = Circle(
         Point((p1x + 0.5) * boxsize, (p1y + 0.5) * boxsize),
         boxsize / 2
@@ -25,7 +59,7 @@ def tic_tac_toe_o(win, p1x, p1y):
     circle.draw(win)
 
 
-def tic_tac_toe_x(win, p1x, p1y):
+def tic_tac_toe_x(p1x, p1y):
     """Draw tic_tac_toe_x.
 
     Cross out the loser's photo
@@ -34,7 +68,6 @@ def tic_tac_toe_x(win, p1x, p1y):
     - loser_center: the center of the loser's picture (as a Point).
     """
     board[p1y][p1x] = 'x'
-    pprint(board)
     for i in range(1, 3):
         pos_x = p1x * boxsize
         pos_y = p1y * boxsize
@@ -53,7 +86,7 @@ def points(board, x, y, player):
     board[x][y] = player
     col = row = diag = rdiag = 0
     for i in range(0, squares):
-        if board[2 - i][i] == player:
+        if board[squares - i - 1][i] == player:
             rdiag += 1
         if board[x][i] == player:
             col += 1
@@ -68,11 +101,41 @@ def points(board, x, y, player):
     return 0
 
 
+def heuristics(board, player):
+    u"""Heurística para tomar decisão."""
+    board = copy.deepcopy(board)
+    col = row = diag = rdiag = 0
+    for i in range(0, squares):
+        if board[squares - i - 1][i] != player:
+            rdiag += 1
+        if board[x][i] != player:
+            col += 1
+        if board[i][y] != player:
+            row += 1
+        if board[i][i] != player:
+            diag += 1
+
+    heur = 0
+    if col == squares:
+        heur += 1
+    if row == squares:
+        heur += 1
+    if diag == squares:
+        heur += 1
+    if rdiag == squares:
+        heur += 1
+    return heur
+
+
 def minimax_x(board, x, y):
+    u"""Minimax para jogada de x."""
     results = []
     moves = []
     board = copy.deepcopy(board)
     board[x][y] = 'o'
+    if heuristic:
+        if n_plays(board) - depth >= max_depth:
+            return (heuristics(board, 'o'), None)
     for i in range(0, squares):
         for j in range(0, squares):
             if board[i][j] == '':
@@ -92,10 +155,14 @@ def minimax_x(board, x, y):
 
 
 def minimax_o(board, x, y):
+    u"""Minimax para jogada de o."""
     results = []
     moves = []
     board = copy.deepcopy(board)
     board[x][y] = 'x'
+    if heuristic:
+        if n_plays(board) - depth >= max_depth:
+            return (heuristics(board, 'x'), None)
     for i in range(0, squares):
         for j in range(0, squares):
             if board[i][j] == '':
@@ -116,6 +183,10 @@ def minimax_o(board, x, y):
 
 def minimax(board, x, y, player):
     u"""O jogador jogou na posição (x, y)."""
+    global depth, max_depth, heuristic
+    depth = n_plays(board)
+    max_depth = 4
+    heuristic = True
     if player == 'x':
         print("Turno - Player o")
         (result, move) = minimax_o(board, x, y)
@@ -123,6 +194,16 @@ def minimax(board, x, y, player):
         print("Turno - Player x")
         (result, move) = minimax_x(board, x, y)
     return (move[0], move[1])
+
+
+def n_plays(board):
+    u"""Número de jogadas feitas."""
+    n_plays = 0
+    for i in range(0, squares):
+        for j in range(0, squares):
+            if board[i][j] != '':
+                n_plays += 1
+    return n_plays
 
 
 def input(player):
@@ -138,55 +219,43 @@ def input(player):
     return (x, y)
 
 
+def play_tic_tac_toe(board):
+    u"""Faz a jogada de player."""
+    global x, y, player
+    # Jogada de X (com input)
+    if player == 'x':
+        (x, y) = input('x')
+        tic_tac_toe_x(x, y)
+    # Jogada de O (com AI)
+    if player == 'o':
+        (y, x) = minimax(board, y, x, 'x')
+        tic_tac_toe_o(x, y)
+
+    # Verifica condição de vitória
+    pprint(board)
+    if points(board, y, x, player) == 1:
+        tic_tac_toe_victory(player)
+    else:
+        player = 'x' if player == 'o' else 'o'
+
+
 def main():
     """Game Engine."""
-    global win
-    global boxsize
-    global board
-    global squares
-
-    # Mecânica do jogo
+    global board, player
     board = [
         ['', '', ''],
         ['', '', ''],
         ['', '', '']
     ]
+    player = 'x'
 
-    # Configurações de jogo
-    windowsize = 600
-    squares = 3
-    boxsize = windowsize / squares
+    create_board()
 
-    # Desenhando tabuleiro
-    win = GraphWin("Tic Tac Toe", windowsize, windowsize)
-    for i in range(squares - 1):
-        position = (boxsize) * (i + 1)
-        Line(Point(0, position), Point(windowsize, position)).draw(win)
-        Line(Point(position, 0), Point(position, windowsize)).draw(win)
+    # Loop principal de jogo
+    for i in range(squares ** 2):
+        play_tic_tac_toe(board)
 
-    # Jogadas do jogo
-    for i in range((squares ** 2) // 2):
-
-        (x, y) = input('x')
-        tic_tac_toe_x(win, x, y)
-        if points(board, y, x, 'x') == 1:
-            print("Player 1 venceu!")
-            return
-
-        # (x, y) = input('o')
-        (y, x) = minimax(board, y, x, 'x')
-        tic_tac_toe_o(win, x, y)
-        if points(board, y, x, 'o') == 1:
-            print("Player 2 venceu!")
-            return
-
-    (x, y) = input('x')
-    tic_tac_toe_x(win, x, y)
-    if points(board, y, x, 'x') == 1:
-        print("Player 1 won!")
-        return
-
-    print("Deu velha!")
+    tic_tac_toe_victory('-')
 
 
 # Rotina main()
