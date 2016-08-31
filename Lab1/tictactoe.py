@@ -4,6 +4,7 @@ u"""Clássico jogo da velha."""
 from pprint import pprint
 from graphics import *
 import copy
+import sys
 
 
 def create_board():
@@ -142,7 +143,13 @@ def minimax_x(board, x, y):
                 point = points(board, i, j, 'x')
                 if point == 0:
                     # Continua buscando nós
-                    results.append(minimax_o(board, i, j)[0])
+                    value = minimax_x(board, i, j)[0]
+                    # Beta não pode diminuir
+                    if heuristic and value < poda[n_plays(board)]:
+                        # Poda da árvore de busca
+                        return (0, None)
+                    else:
+                        results.append(minimax_o(board, i, j)[0])
                 else:
                     # Nó. Ponto. Voltar
                     results.append(-1)
@@ -151,6 +158,7 @@ def minimax_x(board, x, y):
     if len(results) == 0:
         return (0, None)
     min_id = results.index(min(results))
+    poda[n_plays(board)] = min(poda[n_plays(board)], results[min_id])
     return (results[min_id], moves[min_id])
 
 
@@ -169,7 +177,13 @@ def minimax_o(board, x, y):
                 point = points(board, i, j, 'o')
                 if point == 0:
                     # Continua buscando nós
-                    results.append(minimax_x(board, i, j)[0])
+                    value = minimax_x(board, i, j)[0]
+                    # Alpha não pode aumentar
+                    if heuristic and value > poda[n_plays(board)]:
+                        # Poda da árvore de busca
+                        return (0, None)
+                    else:
+                        results.append(value)
                 else:
                     # Nó. Ponto. Voltar
                     results.append(1)
@@ -178,15 +192,20 @@ def minimax_o(board, x, y):
     if len(results) == 0:
         return (0, None)
     max_id = results.index(max(results))
+    poda[n_plays(board)] = max(poda[n_plays(board)], results[max_id])
     return (results[max_id], moves[max_id])
 
 
 def minimax(board, x, y, player):
     u"""O jogador jogou na posição (x, y)."""
-    global depth, max_depth, heuristic
+    global depth, max_depth, heuristic, poda
+    # Características da AI
     depth = n_plays(board)
     max_depth = 4
+    poda = []
     heuristic = True
+    for i in range(squares ** 2):
+        poda.append((-1)**(i%2 + 1)*sys.maxint)
     if player == 'x':
         print("Turno - Player o")
         (result, move) = minimax_o(board, x, y)
