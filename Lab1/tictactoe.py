@@ -138,7 +138,7 @@ def minimax_x(board, x, y):
     # Verifica profundidade máxima
     if heuristic:
         if n_plays(board) - depth >= max_depth:
-            return (heuristics(board, 'o'), None)
+            return (-1 * heuristics(board, 'o'), None)
     # Varre tabuleiro procurando jogadas
     for i in range(0, squares):
         for j in range(0, squares):
@@ -210,7 +210,7 @@ def minimax(board, x, y, player):
     global depth, max_depth, heuristic, poda
     # Características da AI
     depth = n_plays(board)  # Profundidade começa na jogada atual
-    max_depth = 4           # Máxima profundidade de análise
+    max_depth = 5           # Máxima profundidade de análise
     poda = []               # Ramo da árvore analisado
     heuristic = True        # Uso de heurística ou não
     # Realizando análise
