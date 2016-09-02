@@ -3,6 +3,7 @@
 """Algoritmos greedy e A*."""
 from graphics import *
 from Queue import PriorityQueue
+from pprint import pprint
 import copy
 import math
 
@@ -91,6 +92,7 @@ def find_path_a(id_origin, id_destination):
         distance(id_origin, id_destination),
         id_origin, [id_current], [id_current]
     ))
+    var = []
 
     while not queue.empty():
         # Pega a tupla com menor distância estimada
