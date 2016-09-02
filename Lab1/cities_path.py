@@ -3,6 +3,7 @@
 """Algoritmos greedy e A*."""
 from graphics import *
 from Queue import PriorityQueue
+from pprint import pprint
 import copy
 import math
 
@@ -29,6 +30,7 @@ def print_map():
             line = Line(pt, Point(destination[1], destination[2]))
             line.draw(win)
 
+    # Desenhando percurso
     last_city = graph[path[0]]
     for city_id in path:
         city = graph[city_id]
@@ -39,6 +41,15 @@ def print_map():
         line.setFill('red')
         line.draw(win)
         last_city = city
+
+    # Desenhando origem e destino
+    cir = Circle(Point(graph[path[0]][1], graph[path[0]][2]), 5)
+    cir.setFill('red')
+    cir.draw(win)
+    z = len(path) - 1
+    cir = Circle(Point(graph[path[z]][1], graph[path[z]][2]), 5)
+    cir.setFill('red')
+    cir.draw(win)
 
     win.getMouse()
     win.close()
@@ -81,12 +92,12 @@ def find_path_a(id_origin, id_destination):
         distance(id_origin, id_destination),
         id_origin, [id_current], [id_current]
     ))
+    var = []
 
     while not queue.empty():
         # Pega a tupla com menor distância estimada
         tupla = queue.get()
         (_, id_current, visited, solution) = tupla
-        solution = copy.copy(solution)
 
         # Procura caminhos a partir da cidade atual
         for i, id_city in enumerate(graph[id_current]):
@@ -103,12 +114,13 @@ def find_path_a(id_origin, id_destination):
                 current_city_distance + city_destination_distance
 
             visited.append(id_city)
-            solution.append(id_city)
-            queue.put((estimated_current_distance, id_city, visited, solution))
+            path = copy.deepcopy(solution)
+            path.append(id_city)
+            queue.put((estimated_current_distance, id_city, visited, path))
 
             # Verifica se o destino foi alcançado
             if id_city == id_destination:
-                return solution
+                return path
 
 
 def find_path_greedy(id_origin, id_destination):
@@ -125,7 +137,6 @@ def find_path_greedy(id_origin, id_destination):
         # Pega a tupla com menor distância estimada
         tupla = queue.get()
         (_, id_current, visited, solution) = tupla
-        solution = copy.copy(solution)
 
         # Procura caminhos a partir da cidade atual
         for i, id_city in enumerate(graph[id_current]):
@@ -135,29 +146,36 @@ def find_path_greedy(id_origin, id_destination):
             # Estima distância da cidade adjacente até o destino
             city_destination_distance = distance(id_city, id_destination)
             visited.append(id_city)
-            solution.append(id_city)
-            queue.put((city_destination_distance, id_city, visited, solution))
+            path = copy.copy(solution)
+            path.append(id_city)
+            queue.put((city_destination_distance, id_city, visited, path))
 
             # Verifica se o destino foi alcançado
             if id_city == id_destination:
-                return solution
+                return path
+
+
+def total_distance(path):
+    u"""Calcula distância total do caminho."""
+    id_current = path[0]
+    total_distance = 0
+    for id_city in path:
+        total_distance += distance(id_current, id_city)
+        id_current = id_city
+    return total_distance
 
 
 def find_path(id_origin, id_destination):
     u"""Encontra o menor caminho usando algoritmo."""
     global path
-    # path = find_path_greedy("202", "601")
-    path = find_path_a("202", "601")
+    # path = find_path_greedy(id_origin, id_destination)
+    path = find_path_a(id_origin, id_destination)
     # Calcula a menor distância do caminho solução
-    id_current = id_origin
-    total_distance = 0
-    for id_city in path:
-        total_distance += distance(id_current, id_city)
-        id_current = id_city
+    distance = total_distance(path)
 
     # Imprimindo a solução
     print(path)
-    print "Menor distância = " + str(total_distance)
+    print "Menor distância = " + str(distance)
 
 
 path = []

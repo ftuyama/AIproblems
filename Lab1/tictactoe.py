@@ -105,6 +105,7 @@ def points(board, x, y, player):
 def heuristics(board, player):
     u"""Heurística para tomar decisão."""
     board = copy.deepcopy(board)
+    # Verifica todas possibilidades de vitória
     col = row = diag = rdiag = 0
     for i in range(0, squares):
         if board[squares - i - 1][i] != player:
@@ -134,9 +135,11 @@ def minimax_x(board, x, y):
     moves = []
     board = copy.deepcopy(board)
     board[x][y] = 'o'
+    # Verifica profundidade máxima
     if heuristic:
         if n_plays(board) - depth >= max_depth:
             return (heuristics(board, 'o'), None)
+    # Varre tabuleiro procurando jogadas
     for i in range(0, squares):
         for j in range(0, squares):
             if board[i][j] == '':
@@ -155,8 +158,10 @@ def minimax_x(board, x, y):
                     results.append(-1)
                 moves.append((i, j))
 
+    # Caso não haja mais jogadas
     if len(results) == 0:
         return (0, None)
+    # Calcula a jogada com menor pontuação (Min)
     min_id = results.index(min(results))
     poda[n_plays(board)] = min(poda[n_plays(board)], results[min_id])
     return (results[min_id], moves[min_id])
@@ -168,9 +173,11 @@ def minimax_o(board, x, y):
     moves = []
     board = copy.deepcopy(board)
     board[x][y] = 'x'
+    # Verifica profundidade máxima
     if heuristic:
         if n_plays(board) - depth >= max_depth:
             return (heuristics(board, 'x'), None)
+    # Varre tabuleiro procurando jogadas
     for i in range(0, squares):
         for j in range(0, squares):
             if board[i][j] == '':
@@ -189,8 +196,10 @@ def minimax_o(board, x, y):
                     results.append(1)
                 moves.append((i, j))
 
+    # Caso não haja mais jogadas
     if len(results) == 0:
         return (0, None)
+    # Calcula a jogada com maior pontuação (Max)
     max_id = results.index(max(results))
     poda[n_plays(board)] = max(poda[n_plays(board)], results[max_id])
     return (results[max_id], moves[max_id])
@@ -200,12 +209,13 @@ def minimax(board, x, y, player):
     u"""O jogador jogou na posição (x, y)."""
     global depth, max_depth, heuristic, poda
     # Características da AI
-    depth = n_plays(board)
-    max_depth = 4
-    poda = []
-    heuristic = True
+    depth = n_plays(board)  # Profundidade começa na jogada atual
+    max_depth = 4           # Máxima profundidade de análise
+    poda = []               # Ramo da árvore analisado
+    heuristic = True        # Uso de heurística ou não
+    # Realizando análise
     for i in range(squares ** 2):
-        poda.append((-1)**(i%2 + 1)*sys.maxint)
+        poda.append((-1)**(i % 2 + 1) * sys.maxint)
     if player == 'x':
         print("Turno - Player o")
         (result, move) = minimax_o(board, x, y)
@@ -216,7 +226,7 @@ def minimax(board, x, y, player):
 
 
 def n_plays(board):
-    u"""Número de jogadas feitas."""
+    u"""Número de jogadas feitas em board."""
     n_plays = 0
     for i in range(0, squares):
         for j in range(0, squares):
@@ -229,6 +239,7 @@ def input(player):
     u"""Captura jogada válida."""
     print("Turno - Player " + player)
     valido = False
+    # Captura jogada válida
     while not valido:
         mouse = win.getMouse()
         x = mouse.getX() / boxsize
