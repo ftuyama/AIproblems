@@ -104,7 +104,7 @@ def find_path_a(id_origin, id_destination):
                 continue
 
             # Distância da cidade atual até a adjacente
-            current_city_distance = distance(id_current, id_city)
+            current_city_distance = total_distance(solution)
             # Estima distância da cidade adjacente até o destino
             city_destination_distance = distance(id_city, id_destination)
             # Estimativa da distância total através da cidade adjacente
@@ -168,12 +168,10 @@ def find_path(id_origin, id_destination):
     global path
     # path = find_path_greedy(id_origin, id_destination)
     path = find_path_a(id_origin, id_destination)
-    # Calcula a menor distância do caminho solução
-    distance = total_distance(path)
 
     # Imprimindo a solução
-    print(path)
-    print "Menor distância = " + str(distance)
+    print path
+    print "Menor distância = " + str(total_distance(path))
 
 
 path = []
