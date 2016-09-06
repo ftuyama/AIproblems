@@ -17,25 +17,32 @@ def funcao(x, y):
 
 def tempera_simulada():
     u"""Forjando a melhor espada - máximo da função."""
-    temp = 1024.0
-    x = 10
-    y = 10
-    while True:
-        if temp < 1:
-            return (x, y)
+    (temp, step) = (1.0, 0.5)
+    (x, y) = (1.0, -2.0)
+    fx = funcao(x, y)
+    (xy_max, f_max) = ((x, y), fx)
 
-        xx = x + uniform(-0.5, 0.5)
-        yy = y + uniform(-0.5, 0.5)
-        delta = funcao(x, y) - funcao(xx, yy)
-        if delta >= 0:
-            x = xx
-            y = yy
+    while temp > 0.01:
+
+        xx = x + uniform(-1 * step, step)
+        yy = y + uniform(-1 * step, step)
+        fxx = funcao(xx, yy)
+
+        delta = fxx - fx
+        if fxx > f_max:
+            f_max = fxx
+            xy_max = (xx, yy)
+
+        if delta > 0:
+            (x, y, fx) = (xx, yy, fxx)
         else:
-            if randint(0, 100) < 100 * math.exp(delta / temp):
-                x = xx
-                y = yy
+            print 100 * math.exp(10 * delta / temp)
+            if randint(0, 100) < 100 * math.exp(10 * delta / temp):
+                (x, y, fx) = (xx, yy, fxx)
 
-        temp = temp / 2
+        temp = temp - 0.01
+
+    return xy_max
 
 
 # Rotina main()
