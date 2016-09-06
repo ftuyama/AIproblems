@@ -20,7 +20,7 @@ def tempera_simulada():
     (temp, step) = (1.0, 0.5)
     (x, y) = (1.0, -2.0)
     fx = funcao(x, y)
-    (xy_max, f_max) = ((x, y), fx)
+    (xm, ym, f_max) = (x, y, fx)
 
     while temp > 0.01:
 
@@ -30,8 +30,7 @@ def tempera_simulada():
 
         delta = fxx - fx
         if fxx > f_max:
-            f_max = fxx
-            xy_max = (xx, yy)
+            (xm, ym, f_max) = (xx, yy, fxx)
 
         if delta > 0:
             (x, y, fx) = (xx, yy, fxx)
@@ -42,7 +41,7 @@ def tempera_simulada():
 
         temp = temp - 0.01
 
-    return xy_max
+    return (xm, ym)
 
 
 # Rotina main()
