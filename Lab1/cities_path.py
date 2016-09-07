@@ -94,8 +94,7 @@ def find_path_a(id_origin, id_destination):
 
     while not queue.empty():
         # Pega a tupla com menor distância estimada
-        tupla = queue.get()
-        (_, id_current, visited, solution) = tupla
+        (_, id_current, visited, solution) = queue.get()
 
         # Procura caminhos a partir da cidade atual
         for i, id_city in enumerate(graph[id_current]):
@@ -133,8 +132,7 @@ def find_path_greedy(id_origin, id_destination):
 
     while not queue.empty():
         # Pega a tupla com menor distância estimada
-        tupla = queue.get()
-        (_, id_current, visited, solution) = tupla
+        (_, id_current, visited, solution) = queue.get()
 
         # Procura caminhos a partir da cidade atual
         for i, id_city in enumerate(graph[id_current]):
