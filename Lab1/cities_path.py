@@ -89,7 +89,7 @@ def find_path_a(id_origin, id_destination):
     queue = PriorityQueue()
     queue.put((
         distance(id_origin, id_destination),
-        id_origin, [id_current], [id_current]
+        id_origin, {id_current: 0}, [id_current]
     ))
 
     while not queue.empty():
@@ -98,9 +98,16 @@ def find_path_a(id_origin, id_destination):
 
         # Procura caminhos a partir da cidade atual
         for i, id_city in enumerate(graph[id_current]):
-            # Se a cidade já foi visitada, não é incluída
-            if i < 3 or id_city in visited:
+            if i < 3:
                 continue
+
+            # Se a cidade já foi visitada, ver menor caminho
+            if id_city in visited.keys():
+                current_city_distance = total_distance(solution)
+                if current_city_distance < visited[id_city]:
+                    visited[id_city] = current_city_distance
+                else:
+                    continue
 
             # Distância da cidade atual até a adjacente
             current_city_distance = total_distance(solution)
@@ -110,7 +117,7 @@ def find_path_a(id_origin, id_destination):
             estimated_current_distance =\
                 current_city_distance + city_destination_distance
 
-            visited.append(id_city)
+            visited[id_city] = current_city_distance
             path = copy.deepcopy(solution)
             path.append(id_city)
             queue.put((estimated_current_distance, id_city, visited, path))
@@ -127,7 +134,7 @@ def find_path_greedy(id_origin, id_destination):
     queue = PriorityQueue()
     queue.put((
         distance(id_origin, id_destination),
-        id_origin, [id_current], [id_current]
+        id_origin, {id_current: 0}, [id_current]
     ))
 
     while not queue.empty():
@@ -137,11 +144,20 @@ def find_path_greedy(id_origin, id_destination):
         # Procura caminhos a partir da cidade atual
         for i, id_city in enumerate(graph[id_current]):
             # Se a cidade já foi visitada, não é incluída
-            if i < 3 or id_city in visited:
+            if i < 3:
                 continue
+
+            # Se a cidade já foi visitada, ver menor caminho
+            if id_city in visited.keys():
+                current_city_distance = total_distance(solution)
+                if current_city_distance < visited[id_city]:
+                    visited[id_city] = current_city_distance
+                else:
+                    continue
+
             # Estima distância da cidade adjacente até o destino
             city_destination_distance = distance(id_city, id_destination)
-            visited.append(id_city)
+            visited[id_city] = total_distance(solution)
             path = copy.copy(solution)
             path.append(id_city)
             queue.put((city_destination_distance, id_city, visited, path))
