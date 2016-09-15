@@ -5,65 +5,89 @@ from pprint import pprint
 import copy
 
 
-def restricoes(info):
+def restricoes(info, analysis):
     u"""Nro restrições quebradas."""
     restricoes = [
-        info["ingles"] == info["vermelha"] or
-        undefined(["ingles", "vermelha"], info),
+        undefined(["ingles", "vermelha"], info, analysis) or
+        info["ingles"] == info["vermelha"],
 
-        info["espanhol"] == info["cachorro"] or
-        undefined(["espanhol", "cachorro"], info),
+        undefined(["espanhol", "cachorro"], info, analysis) or
+        info["espanhol"] == info["cachorro"],
 
-        info["kool"] == info["amarela"] or
-        undefined(["kool", "amarela"], info),
+        undefined(["kool", "amarela"], info, analysis) or
+        info["kool"] == info["amarela"],
 
-        abs(info["chesterfield"] - info["raposa"]) == 1 or
-        undefined(["chesterfield", "raposa"], info),
+        undefined(["chesterfield", "raposa"], info, analysis) or
+        abs(info["chesterfield"] - info["raposa"]) == 1,
 
-        abs(info["noruegues"] - info["azul"]) == 1 or
-        undefined(["noruegues", "azul"], info),
+        undefined(["noruegues", "azul"], info, analysis) or
+        abs(info["noruegues"] - info["azul"]) == 1,
 
-        info["winston"] == info["caramujos"] or
-        undefined(["winston", "caramujos"], info),
+        undefined(["winston", "caramujos"], info, analysis) or
+        info["winston"] == info["caramujos"],
 
-        info["lucky_strike"] == info["suco_laranja"] or
-        undefined(["lucky_strike", "suco_laranja"], info),
+        undefined(["lucky_strike", "suco_laranja"], info, analysis) or
+        info["lucky_strike"] == info["suco_laranja"],
 
-        info["ucraniano"] == info["cha"] or
-        undefined(["ucraniano", "cha"], info),
-        info["japones"] == info["parliament"] or
-        undefined(["japones", "parliament"], info),
+        undefined(["ucraniano", "cha"], info, analysis) or
+        info["ucraniano"] == info["cha"],
+        undefined(["japones", "parliament"], info, analysis) or
+        info["japones"] == info["parliament"],
 
-        abs(info["kool"] - info["cavalo"]) or
-        undefined(["kool", "cavalo"], info),
+        undefined(["kool", "cavalo"], info, analysis) or
+        abs(info["kool"] - info["cavalo"]),
 
-        info["cafe"] == info["verde"] or
-        undefined(["cafe", "verde"], info),
+        undefined(["cafe", "verde"], info, analysis) or
+        info["cafe"] == info["verde"],
 
-        info["verde"] == info["marfim"] + 1 or
-        undefined(["verde", "marfim"], info),
+        undefined(["verde", "marfim"], info, analysis) or
+        info["verde"] == info["marfim"] + 1,
 
-        info["leite"] == 2 or
-        undefined(["leite"], info)
+        undefined(["leite"], info, analysis) or
+        info["leite"] == 2,
     ]
     return len(restricoes) - sum(restricoes)
 
 
-def undefined(fields, info):
+def undefined(fields, info, analysis):
     u"""Verifica se algum campo é nulo."""
+    global grau
     for field in fields:
-        if info[field] == -1:
+        if analysis:
+            grau[field] += 1
+        elif info[field] == -1:
             return True
     return False
 
 
+def analyse_grau():
+    u"""Ordena map por número de graus."""
+    global grau
+    global info
+    restricoes(info, True)
+    grau = sorted(grau.items(), key=lambda x: x[1], reverse=True)
+
+
+def pretty_print(info):
+    u"""Imprime a solução de forma elegante."""
+    info = sorted(info.items(), key=lambda x: x[1])
+    pprint(info)
+
+
 def select_var(info):
     u"""Seleciona variável não atribuída."""
+    # Usa heurística de menor domínio
     p_var = []
+    min_domain = 5
     for i in range(5):
         for group in groups:
             if info[group[i]] == -1:
-                p_var.append((i, group))
+                domain = select_domain(info, group)
+                if len(domain) < min_domain:
+                    p_var = [(i, group)]
+                    min_domain = len(domain)
+                elif len(domain) == min_domain:
+                    p_var.append((i, group))
     return p_var
 
 
@@ -78,7 +102,7 @@ def select_domain(info, group):
 
 def is_solved(info):
     u"""Verifica se foi resolvido."""
-    if restricoes(info) != 0:
+    if restricoes(info, False) != 0:
         return False
     for i in range(5):
         for group in groups:
@@ -90,17 +114,15 @@ def is_solved(info):
 def backtracking(info):
     u"""Verifica se algum campo é nulo."""
     info = copy.deepcopy(info)
-    # pprint(info)
     if is_solved(info):
         return info
     p_var = select_var(info)
     for s_var in p_var:
         (var, group) = s_var
-        domain = select_domain(info, group)
-        for value in domain:
+        for value in select_domain(info, group):
             new_info = copy.deepcopy(info)
             new_info[group[var]] = value
-            if restricoes(new_info) == 0:
+            if restricoes(new_info, False) == 0:
                 result = backtracking(new_info)
                 if result is not None:
                     return result
@@ -114,11 +136,15 @@ animais = ["cachorro", "raposa", "caramujos", "cavalo", "zebra"]
 groups = [cores, pessoas, marcas, bebidas, animais]
 
 info = {}
+grau = {}
 for i in range(5):
     info[cores[i]] = info[pessoas[i]] = info[marcas[i]] = \
         info[bebidas[i]] = info[animais[i]] = -1
+    grau[cores[i]] = grau[pessoas[i]] = grau[marcas[i]] = \
+        grau[bebidas[i]] = grau[animais[i]] = 0
 
-pprint(backtracking(info))
+# analyse_grau()
+pretty_print(backtracking(info))
 
 # Rotina main()
 print "*************************************"
