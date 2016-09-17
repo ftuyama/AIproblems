@@ -89,10 +89,6 @@ class Puzzle(object):
         if piece1.has({'pessoa': 'noruegues'}) and \
                 piece2.has({'casa': 'azul'}):
             if not self.neighboors(piece1, piece2):
-                print "x"
-                print(piece1.dicty["numero"])
-                print(piece2.dicty["numero"])
-                print "x"
                 return False
 
         if piece1.has({'cigarro': 'kool'}) and \
@@ -114,13 +110,12 @@ class Puzzle(object):
 
     def board_fits(self, pieces, piece1, piece2):
         u"""Verifica se a peça se encaixa no tabuleiro."""
-        if not self.board_restric(piece1, piece2):
-            return False
+        pieces = copy.deepcopy(pieces)
+        new_piece = self.connect_pieces(pieces, piece1, piece2)
+
         for piece in pieces:
-            if not (piece.same(piece1) or piece.same(piece2)):
-                if not (self.board_restric(piece, piece1) and
-                        self.board_restric(piece, piece2)):
-                    return False
+            if not self.board_restric(piece, new_piece):
+                return False
         return True
 
     def piece_fits(self, piece1, piece2):
@@ -154,7 +149,9 @@ class Puzzle(object):
         self.remove(pieces, piece2)
         new_dicty = piece1.dicty
         new_dicty.update(piece2.dicty)
-        pieces.append(Piece(new_dicty))
+        new_piece = Piece(new_dicty)
+        pieces.append(new_piece)
+        return new_piece
 
     def select_domain(self, pieces, piece1):
         u"""Verifica peças encaixáveis."""
@@ -185,14 +182,8 @@ class Puzzle(object):
             return pieces
         for (piece1, domain) in self.select_pieces(pieces):
             for piece2 in domain:
-                self.print_puzzle(pieces)
                 new_pieces = copy.deepcopy(pieces)
                 self.connect_pieces(new_pieces, piece1, piece2)
-                print "x"
-                pprint(piece1.dicty)
-                pprint(piece2.dicty)
-                print "x"
-                self.print_puzzle(new_pieces)
                 if not (new_pieces in visited):
                     visited.append(pieces)
                     result = self.backtracking(new_pieces)
@@ -214,54 +205,4 @@ print "*************************************"
 visited = []
 puzzle = Puzzle()
 puzzle.create_pieces()
-# puzzle.solve()
-# puzzle.print_puzzle(puzzle.select_domain(puzzle.pieces, puzzle.pieces[3]))
-pprint(puzzle.pieces[11].dicty)
-pprint(puzzle.pieces[17].dicty)
-pprint(puzzle.board_fits(puzzle.pieces, puzzle.pieces[11], puzzle.pieces[17]))
-puzzle.connect_pieces(puzzle.pieces, puzzle.pieces[11], puzzle.pieces[17])
-puzzle.print_puzzle(puzzle.pieces)
-# puzzle.pieces = [
-#     Piece({
-#         'numero': 1,
-#         'cor': 'amarela',
-#         'cigarro': 'kool',
-#         'bebida': 'agua',
-#         'animal': 'raposa',
-#         'pessoa': 'noruegues'
-#     }),
-#     Piece({
-#         'numero': 2,
-#         'animal': 'cavalo',
-#         'bebida': 'cha',
-#         'pessoa': 'ucraniano',
-#         'cor': 'azul',
-#         'cigarro': 'chesterfield'
-#     }),
-#     Piece({
-#         'numero': 3,
-#         'cigarro': 'winston',
-#         'cor': 'vermelha',
-#         'animal': 'caramujos',
-#         'bebida': 'leite',
-#         'pessoa': 'ingles'
-#     }),
-#     Piece({
-#         'numero': 4,
-#         'bebida': 'suco_laranja',
-#         'animal': 'cachorro',
-#         'cigarro': 'lucky_strike',
-#         'pessoa': 'espanhol',
-#         'cor': 'marfim'
-#     }),
-#     Piece({
-#         'bebida': 'cafe',
-#         'pessoa': 'japones',
-#         'cigarro': 'parliament',
-#         'cor': 'verde',
-#         'animal': 'zebra'
-#     }),
-#     Piece({
-#         'numero': 5
-#     })
-# ]
+puzzle.solve()
