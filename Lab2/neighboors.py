@@ -60,7 +60,7 @@ class Puzzle(object):
             Piece({'bebida': 'cafe', 'casa': 'verde'}),
             Piece({'bebida': 'leite', 'numero': 3}),
 
-            Piece({'casa': 'marfim'}), Piece({'casa': 'laranja'}),
+            Piece({'casa': 'marfim'}), Piece({'casa': 'azul'}),
             Piece({'cigarro': 'chesterfield'}), Piece({'bebida': 'agua'}),
             Piece({'animal': 'raposa'}), Piece({'animal': 'cavalo'}),
             Piece({'animal': 'zebra'}), Piece({'numero': 2}),
@@ -89,6 +89,10 @@ class Puzzle(object):
         if piece1.has({'pessoa': 'noruegues'}) and \
                 piece2.has({'casa': 'azul'}):
             if not self.neighboors(piece1, piece2):
+                print "x"
+                print(piece1.dicty["numero"])
+                print(piece2.dicty["numero"])
+                print "x"
                 return False
 
         if piece1.has({'cigarro': 'kool'}) and \
@@ -131,7 +135,7 @@ class Puzzle(object):
 
     def fits(self, pieces, piece1, piece2):
         u"""Verifica se encaixe é possível."""
-        return not piece1.same(piece2) and \
+        return \
             self.piece_fits(piece1, piece2) and \
             self.board_fits(pieces, piece1, piece2)
 
@@ -144,6 +148,8 @@ class Puzzle(object):
 
     def connect_pieces(self, pieces, piece1, piece2):
         u"""Encaixa duas peças no quebra-cabeças."""
+        piece1 = copy.deepcopy(piece1)
+        piece2 = copy.deepcopy(piece2)
         self.remove(pieces, piece1)
         self.remove(pieces, piece2)
         new_dicty = piece1.dicty
@@ -154,7 +160,8 @@ class Puzzle(object):
         u"""Verifica peças encaixáveis."""
         domain = []
         for piece2 in pieces:
-            if self.fits(pieces, piece1, piece2):
+            if not piece1.same(piece2) and \
+                    self.fits(pieces, piece1, piece2):
                 domain.append(piece2)
         return domain
 
@@ -163,7 +170,7 @@ class Puzzle(object):
         p_var = []
         min_domain = sys.maxint
         for piece in pieces:
-            if piece.size() != 6:
+            if piece.size() < 6:
                 domain = self.select_domain(pieces, piece)
                 if len(domain) < min_domain:
                     p_var = [(piece, domain)]
@@ -179,8 +186,12 @@ class Puzzle(object):
         for (piece1, domain) in self.select_pieces(pieces):
             for piece2 in domain:
                 self.print_puzzle(pieces)
-                new_pieces = copy.copy(pieces)
+                new_pieces = copy.deepcopy(pieces)
                 self.connect_pieces(new_pieces, piece1, piece2)
+                print "x"
+                pprint(piece1.dicty)
+                pprint(piece2.dicty)
+                print "x"
                 self.print_puzzle(new_pieces)
                 if not (new_pieces in visited):
                     visited.append(pieces)
@@ -203,8 +214,13 @@ print "*************************************"
 visited = []
 puzzle = Puzzle()
 puzzle.create_pieces()
-puzzle.solve()
+# puzzle.solve()
 # puzzle.print_puzzle(puzzle.select_domain(puzzle.pieces, puzzle.pieces[3]))
+pprint(puzzle.pieces[11].dicty)
+pprint(puzzle.pieces[17].dicty)
+pprint(puzzle.board_fits(puzzle.pieces, puzzle.pieces[11], puzzle.pieces[17]))
+puzzle.connect_pieces(puzzle.pieces, puzzle.pieces[11], puzzle.pieces[17])
+puzzle.print_puzzle(puzzle.pieces)
 # puzzle.pieces = [
 #     Piece({
 #         'numero': 1,
