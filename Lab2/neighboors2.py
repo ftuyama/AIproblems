@@ -5,73 +5,65 @@ from pprint import pprint
 import copy
 
 
-def restricoes(info, analysis):
+def restricoes(info):
     u"""Nro restrições quebradas."""
     restricoes = [
-        undefined(["ingles", "vermelha"], info, analysis) or
+        undefined(["ingles", "vermelha"], info) or
         info["ingles"] == info["vermelha"],
 
-        undefined(["espanhol", "cachorro"], info, analysis) or
+        undefined(["espanhol", "cachorro"], info) or
         info["espanhol"] == info["cachorro"],
 
-        undefined(["kool", "amarela"], info, analysis) or
+        undefined(["noruegues"], info) or
+        info["noruegues"] == 0,
+
+        undefined(["kool", "amarela"], info) or
         info["kool"] == info["amarela"],
 
-        undefined(["chesterfield", "raposa"], info, analysis) or
+        undefined(["chesterfield", "raposa"], info) or
         abs(info["chesterfield"] - info["raposa"]) == 1,
 
-        undefined(["noruegues", "azul"], info, analysis) or
+        undefined(["noruegues", "azul"], info) or
         abs(info["noruegues"] - info["azul"]) == 1,
 
-        undefined(["winston", "caramujos"], info, analysis) or
+        undefined(["winston", "caramujos"], info) or
         info["winston"] == info["caramujos"],
 
-        undefined(["lucky_strike", "suco_laranja"], info, analysis) or
+        undefined(["lucky_strike", "suco_laranja"], info) or
         info["lucky_strike"] == info["suco_laranja"],
 
-        undefined(["ucraniano", "cha"], info, analysis) or
+        undefined(["ucraniano", "cha"], info) or
         info["ucraniano"] == info["cha"],
-        undefined(["japones", "parliament"], info, analysis) or
+
+        undefined(["japones", "parliament"], info) or
         info["japones"] == info["parliament"],
 
-        undefined(["kool", "cavalo"], info, analysis) or
+        undefined(["kool", "cavalo"], info) or
         abs(info["kool"] - info["cavalo"]),
 
-        undefined(["cafe", "verde"], info, analysis) or
+        undefined(["cafe", "verde"], info) or
         info["cafe"] == info["verde"],
 
-        undefined(["verde", "marfim"], info, analysis) or
+        undefined(["verde", "marfim"], info) or
         info["verde"] == info["marfim"] + 1,
 
-        undefined(["leite"], info, analysis) or
+        undefined(["leite"], info) or
         info["leite"] == 2,
     ]
     return len(restricoes) - sum(restricoes)
 
 
-def undefined(fields, info, analysis):
+def undefined(fields, info):
     u"""Verifica se algum campo é nulo."""
-    global grau
     for field in fields:
-        if analysis:
-            grau[field] += 1
-        elif info[field] == -1:
+        if info[field] == -1:
             return True
     return False
 
 
-def analyse_grau():
-    u"""Ordena map por número de graus."""
-    global grau
-    global info
-    restricoes(info, True)
-    grau = sorted(grau.items(), key=lambda x: x[1], reverse=True)
-
-
 def pretty_print(info):
     u"""Imprime a solução de forma elegante."""
-    info = sorted(info.items(), key=lambda x: x[1])
-    pprint(info)
+    pprint(sorted(info.items(), key=lambda x: x[1]))
 
 
 def select_var(info):
@@ -80,52 +72,52 @@ def select_var(info):
     p_var = []
     min_domain = 5
     for i in range(5):
-        for group in groups:
-            if info[group[i]] == -1:
-                domain = select_domain(info, group)
+        for j in range(5):
+            if info[groups[j][i]] == -1:
+                domain = select_domain(info, i, groups[j])
                 if len(domain) < min_domain:
-                    p_var = [(i, group)]
+                    p_var = [(i, j, domain)]
                     min_domain = len(domain)
                 elif len(domain) == min_domain:
-                    p_var.append((i, group))
+                    p_var.append((i, j, domain))
     return p_var
 
 
-def select_domain(info, group):
+def select_domain(info, val, group):
     u"""Seleciona domínio da variável."""
-    domain = []
+    domain = [0, 1, 2, 3, 4]
     for i in range(5):
-        if info[group[i]] == -1:
-            domain.append(i)
+        if info[group[i]] != -1:
+            if info[group[i]] in domain:
+                domain.remove(info[group[i]])
+        elif i in domain:
+            inspect = copy.deepcopy(info)
+            inspect[group[val]] = i
+            if restricoes(inspect) != 0:
+                domain.remove(i)
+
     return domain
 
 
 def is_solved(info):
     u"""Verifica se foi resolvido."""
-    if restricoes(info, False) != 0:
-        return False
-    for i in range(5):
-        for group in groups:
-            if info[group[i]] == -1:
-                return False
-    return True
+    return restricoes(info) == 0 and not (-1 in info.values())
 
 
 def backtracking(info):
     u"""Verifica se algum campo é nulo."""
-    info = copy.deepcopy(info)
     if is_solved(info):
         return info
-    p_var = select_var(info)
-    for s_var in p_var:
-        (var, group) = s_var
-        for value in select_domain(info, group):
+    for (var, group, domain) in select_var(info):
+        for value in domain:
             new_info = copy.deepcopy(info)
-            new_info[group[var]] = value
-            if restricoes(new_info, False) == 0:
-                result = backtracking(new_info)
-                if result is not None:
-                    return result
+            new_info[groups[group][var]] = value
+            if not (new_info in visited):
+                visited.append(new_info)
+                if restricoes(new_info) == 0:
+                    result = backtracking(new_info)
+                    if result is not None:
+                        return result
     return None
 
 cores = ["vermelha", "amarela", "azul", "marfim", "verde"]
@@ -135,16 +127,13 @@ bebidas = ["suco_laranja", "cha", "cafe", "leite", "agua"]
 animais = ["cachorro", "raposa", "caramujos", "cavalo", "zebra"]
 groups = [cores, pessoas, marcas, bebidas, animais]
 
-info = {}
-grau = {}
+neigh = {}
+visited = []
 for i in range(5):
-    info[cores[i]] = info[pessoas[i]] = info[marcas[i]] = \
-        info[bebidas[i]] = info[animais[i]] = -1
-    grau[cores[i]] = grau[pessoas[i]] = grau[marcas[i]] = \
-        grau[bebidas[i]] = grau[animais[i]] = 0
+    neigh[cores[i]] = neigh[pessoas[i]] = neigh[marcas[i]] = \
+        neigh[bebidas[i]] = neigh[animais[i]] = -1
 
-# analyse_grau()
-pretty_print(backtracking(info))
+pretty_print(backtracking(neigh))
 
 # Rotina main()
 print "*************************************"

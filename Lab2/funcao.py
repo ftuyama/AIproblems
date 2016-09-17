@@ -2,8 +2,7 @@
 # !/usr/bin/env python
 u"""Algoritmo do Máximo de f(x)."""
 import math
-from random import randint
-from random import uniform
+from random import randint, uniform
 
 
 def funcao(x, y):
