@@ -3,6 +3,7 @@
 u"""Problema dos vizinhos de Einstein."""
 from pprint import pprint
 import copy
+import sys
 
 '''
 Nessa solução, temos vários objetos "Peças" que
@@ -70,13 +71,13 @@ class Puzzle(object):
         u"""Verifica se as peças são vizinhas."""
         if 'numero' in piece1.joints() and 'numero' in piece2.joints():
             return abs(piece1.dicty['numero'] - piece2.dicty['numero']) == 1
-        return False
+        return True
 
     def neighboors_right(self, piece1, piece2):
         u"""Verifica se as peças são vizinhas."""
         if 'numero' in piece1.joints() and 'numero' in piece2.joints():
             return piece2.dicty['numero'] - piece1.dicty['numero'] == 1
-        return False
+        return True
 
     def board_restriction(self, piece1, piece2):
         u"""Verifica restrições do tabuleiro."""
@@ -112,9 +113,10 @@ class Puzzle(object):
         if not self.board_restric(piece1, piece2):
             return False
         for piece in pieces:
-            if not (self.board_restric(piece, piece1) and
-                    self.board_restric(piece, piece2)):
-                return False
+            if not (piece.same(piece1) or piece.same(piece2)):
+                if not (self.board_restric(piece, piece1) and
+                        self.board_restric(piece, piece2)):
+                    return False
         return True
 
     def piece_fits(self, piece1, piece2):
@@ -129,7 +131,8 @@ class Puzzle(object):
 
     def fits(self, pieces, piece1, piece2):
         u"""Verifica se encaixe é possível."""
-        return self.piece_fits(piece1, piece2) and \
+        return not piece1.same(piece2) and \
+            self.piece_fits(piece1, piece2) and \
             self.board_fits(pieces, piece1, piece2)
 
     def remove(self, pieces, piece):
@@ -147,56 +150,42 @@ class Puzzle(object):
         new_dicty.update(piece2.dicty)
         pieces.append(Piece(new_dicty))
 
-    def divide(self, pieces):
-        u"""Seleciona peças para tentativas."""
-        size_pieces = [[], [], [], [], []]
-        for piece in pieces:
-            if piece.size() != 6:
-                size_pieces[piece.size() - 1].append(piece)
-        return size_pieces
+    def select_domain(self, pieces, piece1):
+        u"""Verifica peças encaixáveis."""
+        domain = []
+        for piece2 in pieces:
+            if self.fits(pieces, piece1, piece2):
+                domain.append(piece2)
+        return domain
 
     def select_pieces(self, pieces):
         u"""Seleciona peças para tentativas."""
-        (pieces1, pieces2, pieces3, pieces4, pieces5) = self.divide(pieces)
-        possible = []
-
-        if len(pieces5) > 0:
-            possible.append((pieces5, pieces1))
-        if len(pieces4) > 0:
-            if len(pieces2) > 0:
-                possible.append((pieces4, pieces2))
-            possible.append((pieces4, pieces1))
-        if len(pieces3) > 1:
-            possible.append((pieces3, pieces3))
-        if len(pieces3) > 0:
-            if len(pieces2) > 0:
-                possible.append((pieces3, pieces2))
-            possible.append((pieces3, pieces1))
-        if len(pieces2) > 1:
-            possible.append((pieces2, pieces2))
-        if len(pieces2) > 0:
-            possible.append((pieces2, pieces1))
-        possible.append((pieces1, pieces1))
-        return possible
+        p_var = []
+        min_domain = sys.maxint
+        for piece in pieces:
+            domain = self.select_domain(pieces, piece)
+            if len(domain) < min_domain:
+                p_var = [(piece, domain)]
+                min_domain = len(domain)
+            elif len(domain) == min_domain:
+                p_var.append((piece, domain))
+        return p_var
 
     def backtracking(self, pieces):
         u"""Usa backtracking para resolver."""
         if len(pieces) == 5:
             return pieces
         possible = self.select_pieces(pieces)
-        for (pieces1, pieces2) in possible:
-            for piece1 in pieces1:
-                for piece2 in pieces2:
-                    if not piece1.same(piece2):
-                        if self.fits(pieces, piece1, piece2):
-                            self.print_puzzle(pieces)
-                            new_pieces = copy.copy(pieces)
-                            self.connect_pieces(new_pieces, piece1, piece2)
-                            if not (new_pieces in visited):
-                                visited.append(pieces)
-                                result = self.backtracking(new_pieces)
-                                if result is not None:
-                                    return result
+        for (piece1, domain) in possible:
+            for piece2 in domain:
+                self.print_puzzle(pieces)
+                new_pieces = copy.copy(pieces)
+                self.connect_pieces(new_pieces, piece1, piece2)
+                if not (new_pieces in visited):
+                    visited.append(pieces)
+                    result = self.backtracking(new_pieces)
+                    if result is not None:
+                        return result
         return None
 
     def solve(self):
@@ -214,6 +203,7 @@ visited = []
 puzzle = Puzzle()
 puzzle.create_pieces()
 puzzle.solve()
+# puzzle.print_puzzle(puzzle.select_domain(puzzle.pieces, puzzle.pieces[3]))
 # puzzle.pieces = [
 #     Piece({
 #         'numero': 1,
