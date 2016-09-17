@@ -68,15 +68,17 @@ class Puzzle(object):
 
     def neighboors(self, piece1, piece2):
         u"""Verifica se as peças são vizinhas."""
-        if 'number' in piece1.joints() and 'number' in piece2.joints():
-            return abs(piece1.dicty['number'] - piece2.dicty['number']) == 1
+        if 'numero' in piece1.joints() and 'numero' in piece2.joints():
+            return abs(piece1.dicty['numero'] - piece2.dicty['numero']) == 1
+        return False
 
     def neighboors_right(self, piece1, piece2):
         u"""Verifica se as peças são vizinhas."""
-        if 'number' in piece1.joints() and 'number' in piece2.joints():
-            return piece1.dicty['number'] - piece2.dicty['number'] == 1
+        if 'numero' in piece1.joints() and 'numero' in piece2.joints():
+            return piece2.dicty['numero'] - piece1.dicty['numero'] == 1
+        return False
 
-    def board_restriction(self, piece1, piece2, repeat):
+    def board_restriction(self, piece1, piece2):
         u"""Verifica restrições do tabuleiro."""
         if piece1.has({'cigarro': 'chesterfield'}) and \
                 piece2.has({'animal': 'raposa'}):
@@ -93,18 +95,27 @@ class Puzzle(object):
             if not self.neighboors(piece1, piece2):
                 return False
 
-        if not repeat:
-            if piece1.has({'casa': 'verde'}) and \
-                    piece2.has({'casa': 'marfim'}):
-                if not self.neighboors_right(piece1, piece2):
-                    return False
+        if piece1.has({'casa': 'marfim'}) and \
+                piece2.has({'casa': 'verde'}):
+            if not self.neighboors_right(piece1, piece2):
+                return False
 
         return True
 
-    def board_fits(self, piece1, piece2):
+    def board_restric(self, piece1, piece2):
+        u"""Aplica verificação simétrica."""
+        return self.board_restriction(piece1, piece2) and \
+            self.board_restriction(piece2, piece1)
+
+    def board_fits(self, pieces, piece1, piece2):
         u"""Verifica se a peça se encaixa no tabuleiro."""
-        return self.board_restriction(piece1, piece2, False) and \
-            self.board_restriction(piece2, piece1, True)
+        if not self.board_restric(piece1, piece2):
+            return False
+        for piece in pieces:
+            if not (self.board_restric(piece, piece1) and
+                    self.board_restric(piece, piece2)):
+                return False
+        return True
 
     def piece_fits(self, piece1, piece2):
         u"""Verifica se a peça se encaixa."""
@@ -116,10 +127,10 @@ class Puzzle(object):
                 return False
         return True
 
-    def fits(self, piece1, piece2):
+    def fits(self, pieces, piece1, piece2):
         u"""Verifica se encaixe é possível."""
         return self.piece_fits(piece1, piece2) and \
-            self.board_fits(piece1, piece2)
+            self.board_fits(pieces, piece1, piece2)
 
     def remove(self, pieces, piece):
         u"""Remove uma peça do quebra-cabeças."""
@@ -148,46 +159,50 @@ class Puzzle(object):
         u"""Seleciona peças para tentativas."""
         (pieces1, pieces2, pieces3, pieces4, pieces5) = self.divide(pieces)
         possible = []
+
         if len(pieces5) > 0:
-            return (pieces5, pieces1)
+            possible.append((pieces5, pieces1))
         if len(pieces4) > 0:
             if len(pieces2) > 0:
-                return (pieces4, pieces2)
-            return (pieces4, pieces1)
+                possible.append((pieces4, pieces2))
+            possible.append((pieces4, pieces1))
         if len(pieces3) > 1:
-            return (pieces3, pieces3)
+            possible.append((pieces3, pieces3))
         if len(pieces3) > 0:
             if len(pieces2) > 0:
-                return (pieces3, pieces2)
-            return (pieces3, pieces1)
+                possible.append((pieces3, pieces2))
+            possible.append((pieces3, pieces1))
         if len(pieces2) > 1:
-            return (pieces2, pieces2)
+            possible.append((pieces2, pieces2))
         if len(pieces2) > 0:
-            return (pieces2, pieces1)
-        return (pieces1, pieces1)
+            possible.append((pieces2, pieces1))
+        possible.append((pieces1, pieces1))
+        return possible
 
     def backtracking(self, pieces):
         u"""Usa backtracking para resolver."""
         if len(pieces) == 5:
             return pieces
-        (pieces1, pieces2) = self.select_pieces(pieces)
-        for piece1 in pieces1:
-            for piece2 in pieces2:
-                if not piece1.same(piece2):
-                    if self.fits(piece1, piece2):
-                        self.print_puzzle(pieces)
-                        new_pieces = copy.copy(pieces)
-                        self.connect_pieces(new_pieces, piece1, piece2)
-                        if not (new_pieces in visited):
-                            visited.append(pieces)
-                            result = self.backtracking(new_pieces)
-                            if result is not None:
-                                return result
+        possible = self.select_pieces(pieces)
+        for (pieces1, pieces2) in possible:
+            for piece1 in pieces1:
+                for piece2 in pieces2:
+                    if not piece1.same(piece2):
+                        if self.fits(pieces, piece1, piece2):
+                            self.print_puzzle(pieces)
+                            new_pieces = copy.copy(pieces)
+                            self.connect_pieces(new_pieces, piece1, piece2)
+                            if not (new_pieces in visited):
+                                visited.append(pieces)
+                                result = self.backtracking(new_pieces)
+                                if result is not None:
+                                    return result
         return None
 
     def solve(self):
         u"""Resolve o quebra-cabeças."""
-        puzzle.print_puzzle(self.backtracking(self.pieces))
+        self.pieces = self.backtracking(self.pieces)
+        self.print_puzzle(self.pieces)
 
 
 print "*************************************"
@@ -199,3 +214,47 @@ visited = []
 puzzle = Puzzle()
 puzzle.create_pieces()
 puzzle.solve()
+# puzzle.pieces = [
+#     Piece({
+#         'numero': 1,
+#         'cor': 'amarela',
+#         'cigarro': 'kool',
+#         'bebida': 'agua',
+#         'animal': 'raposa',
+#         'pessoa': 'noruegues'
+#     }),
+#     Piece({
+#         'numero': 2,
+#         'animal': 'cavalo',
+#         'bebida': 'cha',
+#         'pessoa': 'ucraniano',
+#         'cor': 'azul',
+#         'cigarro': 'chesterfield'
+#     }),
+#     Piece({
+#         'numero': 3,
+#         'cigarro': 'winston',
+#         'cor': 'vermelha',
+#         'animal': 'caramujos',
+#         'bebida': 'leite',
+#         'pessoa': 'ingles'
+#     }),
+#     Piece({
+#         'numero': 4,
+#         'bebida': 'suco_laranja',
+#         'animal': 'cachorro',
+#         'cigarro': 'lucky_strike',
+#         'pessoa': 'espanhol',
+#         'cor': 'marfim'
+#     }),
+#     Piece({
+#         'bebida': 'cafe',
+#         'pessoa': 'japones',
+#         'cigarro': 'parliament',
+#         'cor': 'verde',
+#         'animal': 'zebra'
+#     }),
+#     Piece({
+#         'numero': 5
+#     })
+# ]
