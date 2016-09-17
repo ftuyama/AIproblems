@@ -163,24 +163,25 @@ class Puzzle(object):
         p_var = []
         min_domain = sys.maxint
         for piece in pieces:
-            domain = self.select_domain(pieces, piece)
-            if len(domain) < min_domain:
-                p_var = [(piece, domain)]
-                min_domain = len(domain)
-            elif len(domain) == min_domain:
-                p_var.append((piece, domain))
+            if piece.size() != 6:
+                domain = self.select_domain(pieces, piece)
+                if len(domain) < min_domain:
+                    p_var = [(piece, domain)]
+                    min_domain = len(domain)
+                elif len(domain) == min_domain:
+                    p_var.append((piece, domain))
         return p_var
 
     def backtracking(self, pieces):
         u"""Usa backtracking para resolver."""
         if len(pieces) == 5:
             return pieces
-        possible = self.select_pieces(pieces)
-        for (piece1, domain) in possible:
+        for (piece1, domain) in self.select_pieces(pieces):
             for piece2 in domain:
                 self.print_puzzle(pieces)
                 new_pieces = copy.copy(pieces)
                 self.connect_pieces(new_pieces, piece1, piece2)
+                self.print_puzzle(new_pieces)
                 if not (new_pieces in visited):
                     visited.append(pieces)
                     result = self.backtracking(new_pieces)
