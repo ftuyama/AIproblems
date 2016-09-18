@@ -3,6 +3,7 @@
 """Algoritmo das N-Rainhas."""
 from graphics import *
 from random import randint
+import timeit
 
 
 def print_board(board):
@@ -81,38 +82,45 @@ def max_violations(board):
     return (max_violeted, max_violations)
 
 
-def hill_climbing(board, max):
+def hill_climbing(board, max_steps):
     u"""Maximiza função de requisito."""
-    for i in range(max):
-        current = restricoes(board)
+    for i in range(max_steps):
+        # Número atual de restrições
+        (best, current) = (0, restricoes(board))
         if current == 0:
             return board, i
 
-        (pieces, violations) = max_violations(board)
+        # Peças com maior número de violações e seu número
+        (violated, violations) = max_violations(board)
 
+        # Evita condição de mínimo local
         if violations < 5 and randint(0, 100) > 50:
             board[randint(0, len(board) - 1)] = randint(0, len(board) - 1)
 
-        best = 0
-        j = pieces[randint(0, len(pieces) - 1)]
+        # Escolhe uma peça para avaliar
+        j = violated[randint(0, len(violated) - 1)]
+        # Inspeciona para determinar melhor escolha
         for i in range(N):
-            board[j] = i
-            inspection = restricoes(board)
-            if inspection <= current:
-                best = i
-                current = inspection
+            if not (i in board):
+                board[j] = i
+                inspection = restricoes(board)
+                if inspection <= current:
+                    (best, current) = (i, inspection)
         board[j] = best
-    return board, max
+    return board, max_steps
 
 
 def monte_carlo(n_squares, depth):
     u"""Run algorithm several times."""
     total_steps = 0
+    start = timeit.default_timer()
+
     for i in range(depth):
-        if i % depth / 10 == 0:
-            print i
         board = [0] * n_squares
-        total_steps += hill_climbing(board, 1000)[1]
+        total_steps += hill_climbing(board, 20000)[1]
+
+    stop = timeit.default_timer()
+    print "Avarage time: " + str(((stop - start) * 1.0) / depth)
     print "Avarage steps: " + str((total_steps * 1.0) / depth)
 
 # Rotina main()
@@ -121,12 +129,12 @@ print "*                                   *"
 print "*       Problema das N-Rainhas      *"
 print "*                                   *"
 print "*************************************"
-N = 20
-demo = True
+N = 30
+demo = False
 if demo:
     board = [0] * N
     (solution, steps) = hill_climbing(board, 1000)
     print "Solved in " + str(steps) + " steps"
     print_board(solution)
 else:
-    monte_carlo(N, 50)
+    monte_carlo(N, 10)

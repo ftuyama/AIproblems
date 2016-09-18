@@ -10,14 +10,15 @@ def funcao(x, y):
     termo1 = 4 * math.exp(-1 * (x**2 + y**2))
     termo2 = math.exp(-1 * ((x - 5)**2 + (y - 5)**2))
     termo3 = math.exp(-1 * ((x + 5)**2 + (y + 5)**2))
-    termo4 = math.exp(-1 * ((x + 5)**2 + (y + 5)**2))
-    return termo1 + termo2 + termo3 + termo4
+    termo4 = math.exp(-1 * ((x + 5)**2 + (y - 5)**2))
+    termo5 = math.exp(-1 * ((x - 5)**2 + (y + 5)**2))
+    return termo1 + termo2 + termo3 + termo4 + termo5
 
 
-def tempera_simulada():
-    u"""Forjando a melhor espada - máximo da função."""
-    (temp, step) = (1.0, 0.5)
-    (x, y) = (1.0, -2.0)
+def tempera_simulada(x, y, temp, step):
+    u"""Essa função tem quatro argumentos."""
+    u"""(x, y) de início, temperatura e step."""
+
     fx = funcao(x, y)
     (xm, ym, f_max) = (x, y, fx)
 
@@ -27,14 +28,13 @@ def tempera_simulada():
         yy = y + uniform(-1 * step, step)
         fxx = funcao(xx, yy)
 
-        delta = fxx - fx
+        delta = (fxx - fx) / fx
         if fxx > f_max:
             (xm, ym, f_max) = (xx, yy, fxx)
 
         if delta > 0:
             (x, y, fx) = (xx, yy, fxx)
         else:
-            print 100 * math.exp(10 * delta / temp)
             if randint(0, 100) < 100 * math.exp(10 * delta / temp):
                 (x, y, fx) = (xx, yy, fxx)
 
@@ -50,6 +50,6 @@ print "*     Problema do Máximo de f(x)    *"
 print "*                                   *"
 print "*************************************"
 
-solution = tempera_simulada()
+solution = tempera_simulada(5.0, 3.0, 10.0, 1.0)
 print solution
 print funcao(solution[0], solution[1])
