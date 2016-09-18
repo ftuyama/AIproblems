@@ -78,7 +78,7 @@ def max_violations(board):
             max_violeted = [i]
         elif restricoes == max_violations:
             max_violeted.append(i)
-    return max_violeted
+    return (max_violeted, max_violations)
 
 
 def hill_climbing(board, max):
@@ -87,20 +87,21 @@ def hill_climbing(board, max):
         if restricoes(board) == 0:
             return board, i
 
-        if randint(0, 10) > 5:
-            board[randint(0, 7)] = randint(0, 7)
-        else:
-            best = 0
-            current = restricoes(board)
-            pieces = max_violations(board)
-            j = pieces[randint(0, len(pieces) - 1)]
-            for i in range(N):
-                board[j] = i
-                inspection = restricoes(board)
-                if inspection < current:
-                    best = i
-                    current = inspection
-            board[j] = best
+        (pieces, violations) = max_violations(board)
+
+        if violations < 5 and randint(0, 100) > 50:
+            board[randint(0, len(board) - 1)] = randint(0, len(board) - 1)
+
+        best = 0
+        current = restricoes(board)
+        j = pieces[randint(0, len(pieces) - 1)]
+        for i in range(N):
+            board[j] = i
+            inspection = restricoes(board)
+            if inspection < current:
+                best = i
+                current = inspection
+        board[j] = best
     return board, max
 
 
@@ -120,8 +121,8 @@ print "*                                   *"
 print "*       Problema das N-Rainhas      *"
 print "*                                   *"
 print "*************************************"
-N = 8
-demo = True
+N = 20
+demo = False
 if demo:
     board = [0] * N
     (solution, steps) = hill_climbing(board, 1000)
