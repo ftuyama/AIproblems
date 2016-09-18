@@ -50,17 +50,6 @@ print "*     Problema do Máximo de f(x)    *"
 print "*                                   *"
 print "*************************************"
 
-demo = False
-if demo:
-    print funcao(-1, -1)
-    print funcao(-1, 1)
-    print funcao(0, 0)
-    print funcao(1, -1)
-    print funcao(1, 1)
-
-    print funcao(5, 0)
-    print funcao(5, 5)
-
 solution = tempera_simulada()
 print solution
 print funcao(solution[0], solution[1])

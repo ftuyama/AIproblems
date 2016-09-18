@@ -84,7 +84,8 @@ def max_violations(board):
 def hill_climbing(board, max):
     u"""Maximiza função de requisito."""
     for i in range(max):
-        if restricoes(board) == 0:
+        current = restricoes(board)
+        if current == 0:
             return board, i
 
         (pieces, violations) = max_violations(board)
@@ -93,12 +94,11 @@ def hill_climbing(board, max):
             board[randint(0, len(board) - 1)] = randint(0, len(board) - 1)
 
         best = 0
-        current = restricoes(board)
         j = pieces[randint(0, len(pieces) - 1)]
         for i in range(N):
             board[j] = i
             inspection = restricoes(board)
-            if inspection < current:
+            if inspection <= current:
                 best = i
                 current = inspection
         board[j] = best
@@ -122,7 +122,7 @@ print "*       Problema das N-Rainhas      *"
 print "*                                   *"
 print "*************************************"
 N = 20
-demo = False
+demo = True
 if demo:
     board = [0] * N
     (solution, steps) = hill_climbing(board, 1000)

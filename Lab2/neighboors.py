@@ -36,6 +36,16 @@ class Piece(object):
         inteserctions = set(self.dicty.items()) & set(piece.dicty.items())
         return len(inteserctions) == self.size()
 
+    def fits(self, piece):
+        u"""Verifica se a peça se encaixa."""
+        intersection = self.joints() & piece.joints()
+        if len(intersection) == 0:
+            return True
+        for key in intersection:
+            if self.dicty[key] != piece.dicty[key]:
+                return False
+        return True
+
 
 class Puzzle(object):
     u"""Engine do jogo de quebra cabeças."""
@@ -118,20 +128,9 @@ class Puzzle(object):
                 return False
         return True
 
-    def piece_fits(self, piece1, piece2):
-        u"""Verifica se a peça se encaixa."""
-        intersection = piece1.joints() & piece2.joints()
-        if len(intersection) == 0:
-            return True
-        for key in intersection:
-            if piece1.dicty[key] != piece2.dicty[key]:
-                return False
-        return True
-
     def fits(self, pieces, piece1, piece2):
         u"""Verifica se encaixe é possível."""
-        return \
-            self.piece_fits(piece1, piece2) and \
+        return piece1.fits(piece2) and \
             self.board_fits(pieces, piece1, piece2)
 
     def remove(self, pieces, piece):
@@ -184,17 +183,14 @@ class Puzzle(object):
             for piece2 in domain:
                 new_pieces = copy.deepcopy(pieces)
                 self.connect_pieces(new_pieces, piece1, piece2)
-                if not (new_pieces in visited):
-                    visited.append(pieces)
-                    result = self.backtracking(new_pieces)
-                    if result is not None:
-                        return result
+                result = self.backtracking(new_pieces)
+                if result is not None:
+                    return result
         return None
 
     def solve(self):
         u"""Resolve o quebra-cabeças."""
-        self.pieces = self.backtracking(self.pieces)
-        self.print_puzzle(self.pieces)
+        self.print_puzzle(self.backtracking(self.pieces))
 
 
 print "*************************************"
@@ -202,7 +198,6 @@ print "*                                   *"
 print "* Problema dos vizinhos de Einstein *"
 print "*                                   *"
 print "*************************************"
-visited = []
 puzzle = Puzzle()
 puzzle.create_pieces()
 puzzle.solve()

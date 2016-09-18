@@ -90,7 +90,7 @@ def select_domain(info, val, group):
         if info[group[i]] != -1:
             if info[group[i]] in domain:
                 domain.remove(info[group[i]])
-        elif i in domain:
+        if i in domain:
             inspect = copy.deepcopy(info)
             inspect[group[val]] = i
             if restricoes(inspect) != 0:
@@ -101,7 +101,7 @@ def select_domain(info, val, group):
 
 def is_solved(info):
     u"""Verifica se foi resolvido."""
-    return restricoes(info) == 0 and not (-1 in info.values())
+    return not (-1 in info.values())
 
 
 def backtracking(info):
@@ -114,11 +114,16 @@ def backtracking(info):
             new_info[groups[group][var]] = value
             if not (new_info in visited):
                 visited.append(new_info)
-                if restricoes(new_info) == 0:
-                    result = backtracking(new_info)
-                    if result is not None:
-                        return result
+                result = backtracking(new_info)
+                if result is not None:
+                    return result
     return None
+
+print "*************************************"
+print "*                                   *"
+print "* Problema dos vizinhos de Einstein *"
+print "*                                   *"
+print "*************************************"
 
 cores = ["vermelha", "amarela", "azul", "marfim", "verde"]
 pessoas = ["ingles", "espanhol", "noruegues", "ucraniano", "japones"]
@@ -134,10 +139,3 @@ for i in range(5):
         neigh[bebidas[i]] = neigh[animais[i]] = -1
 
 pretty_print(backtracking(neigh))
-
-# Rotina main()
-print "*************************************"
-print "*                                   *"
-print "* Problema dos vizinhos de Einstein *"
-print "*                                   *"
-print "*************************************"
