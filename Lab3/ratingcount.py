@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 # !/usr/bin/env python
-u"""Preditor rústico de avaliação."""
+u"""Classificador a priori de avaliação."""
 
 
 def map(lines):
-    u"""Avalia a função f(x, y) em dado ponto."""
+    u"""Contabiliza avaliações."""
     map = {}
     # Map
     for line in lines:
@@ -23,5 +23,5 @@ def map(lines):
     return map
 
 advice = map(open("ml-1m/ratings.dat", "r").readlines())
-
-print advice["2"]
+movie = "2"
+print advice[movie]
