@@ -40,23 +40,30 @@ def map(lines):
 '''
 
 
-def tree(map, attributes, default):
+def tree(ratings, attributes, default):
     u"""Gera a árvore de decisões."""
-    if len(map) == 0:
+    # Se não há mais avaliações
+    if len(ratings) == 0:
         return default
-    elif same_rates(map):
-        return map.itervalues().next()[1]
+    # Se todas as avaliações são iguais
+    elif all(rate[1] == ratings[0][1] for rate in ratings):
+        return ratings[0][1]
+    # Se não há mais atributos
     elif len(attributes) == 0:
-        return major_value(map)
+        return major_value(ratings)
     else:
-        best = choose_attr(map, attributes)
+        # Variável que minimiza entropia
+        best = choose_attr(ratings, attributes)
         tree = Node(best)
-        m = major_value(map)
+        m = major_value(ratings)
         best_values = []
+        # Gera subárvores de decisão
         for value in best_values:
-            submap = filter(map, best, value)
-            subattributes = sub_attr(attributes, best)
-            subtree = tree(submap, subattributes, m)
+            subratings = filter(lambda rate:
+                                get_attribute(rate, best) == value, ratings)
+            subattributes = {key: v for key,
+                             v in attributes.items() if key != best}
+            subtree = tree(subratings, subattributes, m)
             tree.children.append((value, subtree))
     return tree
 
@@ -66,52 +73,33 @@ def tree(map, attributes, default):
 '''
 
 
-def choose_attr(map, attributes):
+def choose_attr(ratings, attributes):
     u"""Escolhe atributo que minimiza entropia."""
-    return attributes.itervalues().next()[1]
+    return attributes.keys()[0]
 
 
-def sub_attr(attributes, attribute):
-    u"""Lista de atributos sem atributo."""
-    attributes.remove(attribute)
-    return attributes
-
-
-def filter(map, attribute, value):
-    u"""Filtra o mapa, com atributo valor."""
-    return filter(lambda rate: get_attribute(rate, attribute) == value, map)
-
-
-def get_attribute(rate, attribute):
+def get_attribute(rate, attr):
     u"""Retorna o valor de um dado atributo."""
     return {
         "Gender": users[rate[0]][1],
         "Age": users[rate[0]][2],
         "Occuptaion": users[rate[0]][3],
         "Genre": movies[rate[2]][2],
-    }[attribute]
+    }[attr]
 
 
-def major_value(map):
+def major_value(ratings):
     u"""Determina o valor da maioria."""
     rates = [0, 0, 0, 0, 0]
-    for rate in map:
+    for rate in ratings:
         rates[int(rate[1])] += 1
     return rates.index(max(rates))
 
 
-def same_rates(map):
-    u"""Verifica se todas avaliações são iguais."""
-    same = map.itervalues().next()[1]
-    for rate in map:
-        if rate[1] != same:
-            return False
-    return True
-
 '''
     Chamada do programa
 '''
-
+'''
 [ratings, users, movies] = [
     map_ratings(open("ml-1m/ratings.dat", "r").readlines()),
     map(open("ml-1m/users.dat", "r").readlines()),
@@ -128,6 +116,8 @@ attributes = {
         "Mystery", "Romance", "Sci-Fi", "Thriller", "War", "Western"
     ]
 }
+'''
+
 # decision_tree = tree(ratings[movie], attributes, 3)
 
 # Arrumar os atributos de forma inteligente
