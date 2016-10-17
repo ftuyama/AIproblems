@@ -79,11 +79,7 @@ def sub_attr(attributes, attribute):
 
 def filter(map, attribute, value):
     u"""Filtra o mapa, com atributo valor."""
-    filtered = {}
-    for rate in map:
-        if get_attribute(rate, attribute) == value:
-            filtered.append(rate)
-    return filtered
+    return filter(lambda rate: get_attribute(rate, attribute) == value, map)
 
 
 def get_attribute(rate, attribute):
