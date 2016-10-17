@@ -23,7 +23,7 @@ def map_ratings(lines):
         (user, movie, rate, _) = line.split("::")
         if not (movie in map):
             map[movie] = []
-        map[movie].append((user, rate))
+        map[movie].append((user, rate, movie))
     return map
 
 
@@ -68,7 +68,7 @@ def tree(map, attributes, default):
 
 def choose_attr(map, attributes):
     u"""Escolhe atributo que minimiza entropia."""
-    return attributes[0]
+    return attributes.itervalues().next()[1]
 
 
 def sub_attr(attributes, attribute):
@@ -81,11 +81,19 @@ def filter(map, attribute, value):
     u"""Filtra o mapa, com atributo valor."""
     filtered = {}
     for rate in map:
-        # Arrumar os atributos de forma inteligente
-        #  fácil de acessar index e valores assumíveis
-        if users[rate[0]][attribute] == value:
+        if get_attribute(rate, attribute) == value:
             filtered.append(rate)
     return filtered
+
+
+def get_attribute(rate, attribute):
+    u"""Retorna o valor de um dado atributo."""
+    return {
+        "Gender": users[rate[0]][1],
+        "Age": users[rate[0]][2],
+        "Occuptaion": users[rate[0]][3],
+        "Genre": movies[rate[2]][2],
+    }[attribute]
 
 
 def major_value(map):
@@ -114,7 +122,16 @@ def same_rates(map):
     map(open("ml-1m/movies.dat", "r").readlines())
 ]
 movie = "2"
-# attributes = []
+attributes = {
+    "Gender": ["M", "F"],
+    "Age": [1, 18, 25, 35, 45, 50, 56],
+    "Occupation": range(0, 21),
+    "Genre": [
+        "Action", "Adventure", "Animation", "Children's", "Comedy", "Crime",
+        "Documentary", "Drama", "Fantasy", "Film-Noir", "Horror", "Musical",
+        "Mystery", "Romance", "Sci-Fi", "Thriller", "War", "Western"
+    ]
+}
 # decision_tree = tree(ratings[movie], attributes, 3)
 
 # Arrumar os atributos de forma inteligente
