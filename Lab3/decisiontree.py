@@ -2,6 +2,7 @@
 # !/usr/bin/env python
 u"""Árvore de decisão para avaliação."""
 from graphics import *
+import math
 
 '''
     Estrutura de dados da árvore de decisão
@@ -111,12 +112,12 @@ def gen_tree(ratings, attributes, default):
         return Node().leaf(ratings[0][1])
     # Se não há mais atributos
     elif len(attributes) == 0:
-        return Node().leaf(major_value(ratings))
+        return Node().leaf(major_value(ratings)[1])
     else:
         # Variável que minimiza entropia
         best = choose_attr(ratings, attributes)
         tree = Node().father([], best)
-        m = major_value(ratings)
+        m = major_value(ratings)[1]
         # Gera subárvores de decisão
         for value in attributes[best]:
             subratings = filter(lambda rate:
@@ -133,9 +134,24 @@ def gen_tree(ratings, attributes, default):
 '''
 
 
+def entropy(ratings, attribute):
+    u"""Calcula a entropia usando dado atributo."""
+    rates = major_value(ratings)[0]
+    total = len(ratings)
+
+    return sum(
+        (-1.0 * p / total * math.log(1.0 * p / total))
+        for p in rates if p != 0)
+
+
 def choose_attr(ratings, attributes):
     u"""Escolhe atributo que minimiza entropia."""
-    return attributes.keys()[0]
+    best = None
+    min_entropy = math.max
+    for attribute in attributes:
+        if entropy(ratings, attribute) < min_entropy:
+            best = attribute
+    return attribute
 
 
 def get_attribute(rate, attr):
@@ -153,13 +169,16 @@ def major_value(ratings):
     rates = [0, 0, 0, 0, 0]
     for rate in ratings:
         rates[int(rate[1]) - 1] += 1
-    return rates.index(max(rates))
+    return (rates, rates.index(max(rates)))
 
 
 '''
     Chamada do programa
 '''
 
+# Ratings:  {movie: [(user, rate, movie)]}
+# Users:    {user:  [gender, age, occupation, zipcode]}
+# Movies:   {movie: [title, genre]}
 [ratings, users, movies] = [
     map_ratings(open("ml-1m/ratings.dat", "r").readlines()),
     map(open("ml-1m/users.dat", "r").readlines()),
@@ -172,16 +191,11 @@ attributes = {
     "Occupation": [str(i) for i in range(0, 21)]
 }
 
-# attributes = {
-#     "Gender": ["M", "F"],
-#     "Age": [1, 18, 25, 35, 45, 50, 56],
-#     "Occupation": range(0, 21),
 #     "Genre": [
 #         "Action", "Adventure", "Animation", "Children's", "Comedy", "Crime",
 #         "Documentary", "Drama", "Fantasy", "Film-Noir", "Horror", "Musical",
 #         "Mystery", "Romance", "Sci-Fi", "Thriller", "War", "Western"
 #     ]
-# }
 
 decision_tree = gen_tree(ratings[movie], attributes, 3)
 print_tree(decision_tree)
