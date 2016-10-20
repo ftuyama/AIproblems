@@ -146,7 +146,7 @@ def get_attribute_value(rate, attr):
         "Gender": users[rate[0]][0],
         "Age": users[rate[0]][1],
         "Occupation": users[rate[0]][2],
-        "Genre": movies[rate[2]][1].split('|')
+        "Genre": movies[rate[2]][1].split('|'),
         "Movie": rate[2]
     }[attr]
 
@@ -209,10 +209,14 @@ me = {
     "Genre": movies[movie][1]
 }
 
+# Usar todas as avaliações
 # print ratings.values()
 decision_tree = gen_tree(ratings[movie], attributes, 3)
 print_node(decision_tree, 0)
 
-# Árvore de decisões com todos os filmes?
-# Incluir id do filme e gênero como variáveis de decisão?
-# Fazer a poda em certos casos
+print navigate(decision_tree)
+
+# Calcular média em vez de maioria quando acaba atributos
+# Implementar ganho de informação
+# Poda da árvore de decisão
+# Validação cruzada?
