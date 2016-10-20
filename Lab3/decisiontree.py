@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # !/usr/bin/env python
 u"""Árvore de decisão para avaliação."""
-from graphics import *
 import math
 
 '''
@@ -9,43 +8,29 @@ import math
 '''
 
 
-def print_tree(tree):
-    u"""Imprime a árvore de decisões."""
-    win = GraphWin('Decision Tree', 1200, 600)
-    win.setBackground(color_rgb(188, 237, 145))
-    title = Text(Point(500, 30), "Decision Tree")
-    title.setSize(20)
-    title.draw(win)
-    print_node(win, tree, 1, 1)
-    win.getMouse()
-    win.close()
-
-
-def print_node(win, node, width, depth):
+def print_node(node, depth):
     u"""Imprime os nós recursivamente."""
-    cir = Circle(Point(50 * width, 100 * depth), 5)
-    cir.setFill('red')
-    cir.draw(win)
+    if node.father is not None and node.father.attribute is not None:
+        print "Node[" + node.father.attribute + "]",
+        if node.decision is not None:
+            print " dec:" + str(node.decision)
+    else:
+        print "<root>"
 
-    if not (node.attribute is None):
-        attr = Text(Point(50 * width, 100 * depth - 20), node.attribute[:5])
-        attr.setSize(14)
-        attr.draw(win)
-        print node.attribute
-    print "children:" + str(depth)
+    if node.rate is not None:
+        print "<leaf> rate:" + str(node.rate),
+
+    if node.attribute is not None:
+        print "attr:" + str(node.attribute),
+
+    print "    gen:" + str(depth)
+
+    if node.rate is not None and depth != 3:
+        print "YAHOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO"
+
     for i, child in enumerate(node.children):
-        if not (child.decision is None):
-            dec = Text(Point(50 * (i + 1), 100 * depth + 50), child.decision)
-            dec.setSize(12)
-            dec.draw(win)
-            print node.decision
-        print_node(win, child, i + 1, depth + 1)
-    if len(node.children) == 0:
-        attr = Text(Point(50 * width, 100 * depth + 30), node.rate)
-        attr.setSize(12)
-        attr.draw(win)
-        print "leaf"
-        print node.rate
+        print '---------'
+        print_node(child, depth + 1)
 
 
 class Node(object):
@@ -54,9 +39,10 @@ class Node(object):
     def __init__(self):
         u"""Inicializa Nó."""
         self.children = []
-        self.attribute = self.decision = self.rate = None
+        self.attribute = self.decision = \
+            self.rate = self.father = None
 
-    def father(self, children, attribute):
+    def parent(self, children, attribute):
         u"""Inicializa Nó."""
         self.attribute = attribute
         self.children = children
@@ -107,21 +93,18 @@ def gen_tree(ratings, attributes, default):
     # Se não há mais avaliações
     if len(ratings) == 0:
         return Node().leaf(default)
-    # Se todas as avaliações são iguais
-    elif all(rate[1] == ratings[0][1] for rate in ratings):
-        return Node().leaf(ratings[0][1])
-    # Se não há mais atributos
-    elif len(attributes) == 0:
+    # Se avaliações são similares ou não há mais atributos
+    elif similar_rates(ratings) or len(attributes) == 0:
         return Node().leaf(major_value(ratings)[1])
     else:
         # Variável que minimiza entropia
         best = choose_attr(ratings, attributes)
-        tree = Node().father([], best)
+        tree = Node().parent([], best)
         m = major_value(ratings)[1]
         # Gera subárvores de decisão
         for value in attributes[best]:
             subratings = filter(lambda rate:
-                                get_attribute(rate, best) == value, ratings)
+                                is_value(rate, best, value), ratings)
             subattributes = {key: v for key,
                              v in attributes.items() if key != best}
             subtree = gen_tree(subratings, subattributes, m).child(tree, value)
@@ -146,22 +129,31 @@ def entropy(ratings, attribute):
 
 def choose_attr(ratings, attributes):
     u"""Escolhe atributo que minimiza entropia."""
-    best = None
-    min_entropy = math.max
-    for attribute in attributes:
-        if entropy(ratings, attribute) < min_entropy:
-            best = attribute
-    return attribute
+    entropies = [entropy(ratings, attr) for attr in attributes]
+    return attributes.keys()[entropies.index(max(entropies))]
 
 
-def get_attribute(rate, attr):
+def is_value(rate, attr, value):
+    u"""Retorna o valor de um dado atributo."""
+    if attr == "Genre":
+        return value in get_attribute_value(rate, attr)
+    return value == get_attribute_value(rate, attr)
+
+
+def get_attribute_value(rate, attr):
     u"""Retorna o valor de um dado atributo."""
     return {
         "Gender": users[rate[0]][0],
         "Age": users[rate[0]][1],
         "Occupation": users[rate[0]][2],
-        "Genre": movies[rate[2]][1]
+        "Genre": movies[rate[2]][1].split('|')
     }[attr]
+
+
+def similar_rates(ratings):
+    u"""Verifica se avaliações são similares."""
+    (rates, major) = major_value(ratings)
+    return rates[major - 1] >= 0.5 * sum(rates)
 
 
 def major_value(ratings):
@@ -169,7 +161,7 @@ def major_value(ratings):
     rates = [0, 0, 0, 0, 0]
     for rate in ratings:
         rates[int(rate[1]) - 1] += 1
-    return (rates, rates.index(max(rates)))
+    return (rates, rates.index(max(rates)) + 1)
 
 
 '''
@@ -184,22 +176,22 @@ def major_value(ratings):
     map(open("ml-1m/users.dat", "r").readlines()),
     map(open("ml-1m/movies.dat", "r").readlines())
 ]
-movie = "2"
 attributes = {
     "Gender": ["M", "F"],
     "Age": ["1", "18", "25", "35", "45", "50", "56"],
-    "Occupation": [str(i) for i in range(0, 21)]
+    "Occupation": [str(i) for i in range(0, 21)],
+    # "Genre":
+    # [
+    #     "Action", "Adventure", "Animation", "Children's", "Comedy", "Crime",
+    #     "Documentary", "Drama", "Fantasy", "Film-Noir", "Horror", "Musical",
+    #     "Mystery", "Romance", "Sci-Fi", "Thriller", "War", "Western"
+    # ]
 }
 
-#     "Genre": [
-#         "Action", "Adventure", "Animation", "Children's", "Comedy", "Crime",
-#         "Documentary", "Drama", "Fantasy", "Film-Noir", "Horror", "Musical",
-#         "Mystery", "Romance", "Sci-Fi", "Thriller", "War", "Western"
-#     ]
-
+movie = "2"
 decision_tree = gen_tree(ratings[movie], attributes, 3)
-print_tree(decision_tree)
+print_node(decision_tree, 0)
 
-# Implementar escolha de atributos
-# Visualizar árvore construída
-# Pensar num jeito esperto de tratar a lista de gêneros
+# Árvore de decisões com todos os filmes?
+# Incluir id do filme e gênero como variáveis de decisão?
+# Fazer a poda em certos casos
