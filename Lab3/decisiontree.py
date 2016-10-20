@@ -147,11 +147,11 @@ def entropy(ratings, attribute):
 def choose_attr(ratings, attributes):
     u"""Escolhe atributo que minimiza entropia."""
     best = None
-    min_entropy = math.max
+    min_entropy = sys.maxint
     for attribute in attributes:
         if entropy(ratings, attribute) < min_entropy:
             best = attribute
-    return attribute
+    return best
 
 
 def get_attribute(rate, attr):
@@ -160,7 +160,8 @@ def get_attribute(rate, attr):
         "Gender": users[rate[0]][0],
         "Age": users[rate[0]][1],
         "Occupation": users[rate[0]][2],
-        "Genre": movies[rate[2]][1]
+        "Genre": movies[rate[2]][1],
+        "Movie": rate[2]
     }[attr]
 
 
@@ -171,6 +172,14 @@ def major_value(ratings):
         rates[int(rate[1]) - 1] += 1
     return (rates, rates.index(max(rates)))
 
+
+def navigate(node):
+    u"""Realiza indicação de avaliação."""
+    if node.rate is None:
+        for child in node.children:
+            if child.decision == me[node.attribute]:
+                return navigate(child)
+    return node.rate
 
 '''
     Chamada do programa
@@ -188,7 +197,8 @@ movie = "2"
 attributes = {
     "Gender": ["M", "F"],
     "Age": ["1", "18", "25", "35", "45", "50", "56"],
-    "Occupation": [str(i) for i in range(0, 21)]
+    "Occupation": [str(i) for i in range(0, 21)],
+    "Movie": [str(i) for i in range(1, len(movies))]
 }
 
 #     "Genre": [
@@ -197,8 +207,24 @@ attributes = {
 #         "Mystery", "Romance", "Sci-Fi", "Thriller", "War", "Western"
 #     ]
 
+# Navigate in the decision tree
+me = {
+    "Gender": "M",
+    "Age": 18,
+    "Occupation": 12,
+    "Movie": movie,
+    "Genre": movies[movie][1]
+}
+
+# print ratings.values()
 decision_tree = gen_tree(ratings[movie], attributes, 3)
 print_tree(decision_tree)
+print navigate(decision_tree)
+
+# Implementar ganho de informação
+# Limite de ganho de informação para decisão
+# Calcular média em vez de maioria quando acaba atributos
+# Validação cruzada?
 
 # Implementar escolha de atributos
 # Visualizar árvore construída
