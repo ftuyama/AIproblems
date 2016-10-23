@@ -8,28 +8,27 @@ import math
 '''
 
 
+def tab(n):
+    u"""Imprime n tabs."""
+    for i in range(0, n):
+        print '\t',
+
+
 def print_node(node, depth):
     u"""Imprime os nós recursivamente."""
-    if node.father is not None and node.father.attribute is not None:
-        print "Node[" + node.father.attribute + "]",
-        if node.decision is not None:
-            print " dec:" + str(node.decision)
+    tab(depth)
+    if node.rate is not None:
+        print "<leaf>[" + node.father.attribute + "]",
+        print "\tdec: " + str(node.decision),
+        print "\trat: " + str(node.rate),
+        print "\tquo: " + str(node.rates)
+    elif node.father is not None:
+        print "<node> [" + node.father.attribute + "]",
+        print "\tdec: " + str(node.decision)
     else:
         print "<root>"
 
-    if node.rate is not None:
-        print "<leaf> rate:" + str(node.rate),
-
-    if node.attribute is not None:
-        print "attr:" + str(node.attribute),
-
-    print "    gen:" + str(depth)
-
-    if node.rate is not None and depth != 3:
-        print "YAHOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO"
-
     for i, child in enumerate(node.children):
-        print '---------'
         print_node(child, depth + 1)
 
 
@@ -40,7 +39,7 @@ class Node(object):
         u"""Inicializa Nó."""
         self.children = []
         self.attribute = self.decision = \
-            self.rate = self.father = None
+            self.rate = self.rates = self.father = None
 
     def parent(self, children, attribute):
         u"""Inicializa Nó."""
@@ -54,9 +53,10 @@ class Node(object):
         self.decision = decision
         return self
 
-    def leaf(self, rate):
+    def leaf(self, rate, rates):
         u"""Propriedade de avaliação."""
         self.rate = rate
+        self.rates = rates
         return self
 
 '''
@@ -92,10 +92,13 @@ def gen_tree(ratings, attributes, default):
     u"""Gera a árvore de decisões."""
     # Se não há mais avaliações
     if len(ratings) == 0:
-        return Node().leaf(default)
-    # Se avaliações são similares ou não há mais atributos
-    elif similar_rates(ratings) or len(attributes) == 0:
-        return Node().leaf(major_value(ratings)[1])
+        return Node().leaf(default, len(ratings))
+    # Se avaliações são similares
+    elif similar_rates(ratings):
+        return Node().leaf(major_value(ratings)[1], len(ratings))
+    # Se não há mais atributos de decisão
+    elif len(attributes) == 0:
+        return Node().leaf(mean_value(ratings), len(ratings))
     else:
         # Variável que minimiza entropia
         best = choose_attr(ratings, attributes)
@@ -113,24 +116,51 @@ def gen_tree(ratings, attributes, default):
 
 
 '''
-    Auxiliares do principal
+    Navegação na árvore de decisão
 '''
 
 
-def entropy(ratings, attribute):
-    u"""Calcula a entropia usando dado atributo."""
-    rates = major_value(ratings)[0]
-    total = len(ratings)
+def navigate(node):
+    u"""Realiza indicação de avaliação."""
+    if node.rate is None:
+        for child in node.children:
+            if child.decision == me[node.attribute]:
+                return navigate(child)
+    return node.rate
 
+
+'''
+    Cálculo de entropia e Ganho de informação
+'''
+
+
+def entropy(ratings):
+    u"""Calcula a entropia de um conjunto."""
     return sum(
-        (-1.0 * p / total * math.log(1.0 * p / total))
-        for p in rates if p != 0)
+        (-1.0 * p / len(ratings) * math.log(1.0 * p / len(ratings)))
+        for p in major_value(ratings)[0] if p != 0)
+
+
+def entropy_gain(initial_entropy, ratings, attr):
+    u"""Calcula o ganho de entropia para um atributo."""
+    gain = initial_entropy
+    for value in attributes[attr]:
+        subratings = filter(lambda rate:
+                            is_value(rate, attr, value), ratings)
+        gain -= len(subratings) * entropy(subratings) / len(ratings)
+    return gain
 
 
 def choose_attr(ratings, attributes):
-    u"""Escolhe atributo que minimiza entropia."""
-    entropies = [entropy(ratings, attr) for attr in attributes]
-    return attributes.keys()[entropies.index(max(entropies))]
+    u"""Escolhe atributo que maximiza ganho de informação."""
+    gain = [entropy_gain(entropy(ratings), ratings, attr)
+            for attr in attributes]
+    return attributes.keys()[gain.index(max(gain))]
+
+
+'''
+    Verificação de valor de atributo
+'''
 
 
 def is_value(rate, attr, value):
@@ -151,6 +181,11 @@ def get_attribute_value(rate, attr):
     }[attr]
 
 
+'''
+    Cálculo da maioria e da média de avaliações
+'''
+
+
 def similar_rates(ratings):
     u"""Verifica se avaliações são similares."""
     (rates, major) = major_value(ratings)
@@ -165,16 +200,13 @@ def major_value(ratings):
     return (rates, rates.index(max(rates)) + 1)
 
 
-def navigate(node):
-    u"""Realiza indicação de avaliação."""
-    if node.rate is None:
-        for child in node.children:
-            if child.decision == me[node.attribute]:
-                return navigate(child)
-    return node.rate
+def mean_value(ratings):
+    u"""Determina o valor da média."""
+    return int(round(sum([int(rate[1]) for rate in ratings]) / len(ratings)))
+
 
 '''
-    Chamada do programa
+    Leitura das variáveis do programa
 '''
 
 # Ratings:  {movie: [(user, rate, movie)]}
@@ -194,29 +226,37 @@ attributes = {
     #     "Action", "Adventure", "Animation", "Children's", "Comedy", "Crime",
     #     "Documentary", "Drama", "Fantasy", "Film-Noir", "Horror", "Musical",
     #     "Mystery", "Romance", "Sci-Fi", "Thriller", "War", "Western"
-    # ]
-    "Movie": [str(i) for i in range(1, len(movies))]
+    # ],
+    # "Movie": [str(i) for i in range(1, len(movies))]
 }
 
-movie = "2"
+'''
+    Gerando árvore de decisão
+'''
 
-# Navigate in the decision tree
-me = {
-    "Gender": "M",
-    "Age": 18,
-    "Occupation": 12,
-    "Movie": movie,
-    "Genre": movies[movie][1]
-}
+# database = [rate for subratings in ratings.values() for rate in subratings]
 
-# Usar todas as avaliações
-# print ratings.values()
-decision_tree = gen_tree(ratings[movie], attributes, 3)
+movie = "1"
+database = ratings[movie]
+decision_tree = gen_tree(database, attributes, 3)
 print_node(decision_tree, 0)
 
-print navigate(decision_tree)
 
-# Calcular média em vez de maioria quando acaba atributos
-# Implementar ganho de informação
+'''
+    Navegando na árvore de decisão
+'''
+
+me = {
+    "Gender": "M",
+    "Age": "18",
+    "Occupation": "12",
+    # "Genre": movies[movie][1],
+    # "Movie": movie
+}
+
+print "Based on: " + str(len(database)) + " ratings"
+print "Our advice: " + str(navigate(decision_tree))
+
 # Poda da árvore de decisão
 # Validação cruzada?
+# Fazer só subárvore para agilizar
