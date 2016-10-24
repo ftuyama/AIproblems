@@ -103,7 +103,7 @@ def gen_tree(ratings, attributes, default):
         # Variável que minimiza entropia
         best = choose_attr(ratings, attributes)
         tree = Node().parent([], best)
-        m = major_value(ratings)[1]
+        m = mean_value(ratings)
         # Gera subárvores de decisão
         for value in attributes[best]:
             subratings = filter(lambda rate:
@@ -114,18 +114,35 @@ def gen_tree(ratings, attributes, default):
             tree.children.append(subtree)
     return tree
 
+'''
+    Validação cruzada
+'''
+
+
+def cross_val(tree, ratings):
+    u"""Realiza validação cruzada."""
+    changed = True
+    while changed:
+        changed = False
+
+        # for sub_leaf in sub_leafs:
+        #     if better:
+        #         tree = cross_val(new_tree, ratings)
+
+    return tree
+
 
 '''
     Navegação na árvore de decisão
 '''
 
 
-def navigate(node):
+def navigate(node, person):
     u"""Realiza indicação de avaliação."""
     if node.rate is None:
         for child in node.children:
-            if child.decision == me[node.attribute]:
-                return navigate(child)
+            if child.decision == person[node.attribute]:
+                return navigate(child, person)
     return node.rate
 
 
@@ -189,7 +206,7 @@ def get_attribute_value(rate, attr):
 def similar_rates(ratings):
     u"""Verifica se avaliações são similares."""
     (rates, major) = major_value(ratings)
-    return rates[major - 1] >= 0.5 * sum(rates)
+    return rates[major - 1] >= 0.8 * sum(rates)
 
 
 def major_value(ratings):
@@ -204,6 +221,65 @@ def mean_value(ratings):
     u"""Determina o valor da média."""
     return int(round(sum([int(rate[1]) for rate in ratings]) / len(ratings)))
 
+
+'''
+    Realiza a avaliação de um dado filme
+'''
+
+
+def avaliate(movie, person):
+    u"""Realiza avaliação de um dado filme."""
+    # Árvore de decisão usando todas as avaliações
+    # rates = [rate for subrates in ratings.values() for rate in subrates]
+
+    # Árvore de decisão com avaliações do filme
+    database = ratings[movie][1::2]  # Ímpares
+    training = ratings[movie][0::2]  # Pares
+    # Gerando a árvore de decisões
+    decision_tree = gen_tree(database, attributes, 3)
+    # Treinando a árvore de decisões
+    decision_tree = cross_val(decision_tree, training)
+    # Imprimindo a árvore de decisões
+    # print_node(decision_tree, 0)
+    # Navegando na árvore de decisões
+    return navigate(decision_tree, person)
+
+
+'''
+    Análise dos dados recolhidos
+'''
+
+
+def analyse():
+    u"""Analisa o classificador."""
+    # Teste das minhas avaliações
+    my_rates = {"1": 5, "73": 2, "260": 4, "1210": 5, "1274": 3,
+                "1566": 5, "1721": 2, "1907": 4, "2571": 5, "3054": 3}
+
+    # Parâmetros de comparação
+    taxa_acerto = erro_quadratico = kappa = 0
+    matriz_confusao = [[0 for x in range(5)]
+                       for y in range(5)]
+
+    for movie, my_rate in my_rates.iteritems():
+        avaliation = avaliate(movie, me)
+        # Taxa de acerto
+        taxa_acerto += 1 if (avaliation == my_rate) else 0
+        # Matriz confusão
+        matriz_confusao[my_rate - 1][avaliation - 1] += 1
+        # Erro quadrático médio
+        erro_quadratico += (my_rate - avaliation)**2
+
+    taxa_acerto = 1.0 * taxa_acerto / len(my_rates)
+    esperado = 0.25
+    erro_quadratico = 1.0 * erro_quadratico / len(my_rates)
+    kappa = (taxa_acerto - esperado) / (1 - esperado)
+
+    # Imprimindo resultados
+    print("Taxa de acerto   : %.2f" % taxa_acerto)
+    print("Matriz confusão  : " + str(matriz_confusao))
+    print("Erro quadrático  : %.2f" % erro_quadratico)
+    print("Índice Kappa     : %.2f" % kappa)
 
 '''
     Leitura das variáveis do programa
@@ -230,33 +306,21 @@ attributes = {
     # "Movie": [str(i) for i in range(1, len(movies))]
 }
 
-'''
-    Gerando árvore de decisão
-'''
-
-# database = [rate for subratings in ratings.values() for rate in subratings]
-
-movie = "1"
-database = ratings[movie]
-decision_tree = gen_tree(database, attributes, 3)
-print_node(decision_tree, 0)
-
-
-'''
-    Navegando na árvore de decisão
-'''
-
 me = {
     "Gender": "M",
     "Age": "18",
-    "Occupation": "12",
+    "Occupation": "17",
     # "Genre": movies[movie][1],
     # "Movie": movie
 }
 
-print "Based on: " + str(len(database)) + " ratings"
-print "Our advice: " + str(navigate(decision_tree))
+
+'''
+    Demonstração do programa
+'''
+
+print "Our advice: " + str(avaliate("1", me))
+analyse()
 
 # Poda da árvore de decisão
 # Validação cruzada?
-# Fazer só subárvore para agilizar
