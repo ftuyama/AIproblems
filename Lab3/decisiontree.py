@@ -18,7 +18,6 @@ def tab(n):
 def print_node(node, attr, depth):
     u"""Imprime os nós recursivamente."""
     tab(depth)
-    print node.number,
     if node.rate is not None:
         print "<leaf>[" + attr + "]",
         print "\tdec: " + str(node.decision),
@@ -37,6 +36,7 @@ def print_node(node, attr, depth):
 class Node(object):
     u"""Nó de decisão da árvore."""
 
+    # Node id
     number = 0
 
     def __init__(self):
@@ -279,17 +279,18 @@ def avaliate(movie, person):
     # rates = [rate for subrates in ratings.values() for rate in subrates]
 
     # Árvore de decisão com avaliações do filme
-    database = ratings[movie][1::2]  # Ímpares
-    training = ratings[movie][0::2]  # Pares
+    database, training = ratings[movie][0::2], ratings[movie][1::2]
+
     # Gerando a árvore de decisões
     decision_tree = gen_tree(database, attributes, 3)
     # print_node(decision_tree, None, 0)
+
     # Treinando a árvore de decisões
     decision_tree = cross_tree(decision_tree, training)
-    # Imprimindo a árvore de decisões
     # print_node(decision_tree, None, 0)
+
     # Navegando na árvore de decisões
-    return navigate(decision_tree, person)
+    return navigate(decision_tree, person), decision_tree
 
 
 '''
@@ -311,7 +312,7 @@ def analyse():
                        for y in range(5)]
 
     for movie, my_rate in my_rates.iteritems():
-        avaliation = avaliate(movie, me)
+        avaliation = avaliate(movie, me)[0]
         # Taxa de acerto
         taxa_acerto += 1 if (avaliation == my_rate) else 0
         # Matriz confusão
@@ -368,8 +369,6 @@ me = {
     Demonstração do programa
 '''
 
-print "Our advice: " + str(avaliate("1", me))
+print "Our advice: " + str(avaliate("1", me)[0])
+print_node(avaliate("1", me)[1], None, 0)
 analyse()
-
-# Poda da árvore de decisão
-# Validação cruzada?

@@ -25,9 +25,11 @@ def map(lines):
 
 def analyse():
     u"""Analisa o classificador."""
-    # Teste das minhas avaliações
-    my_rates = {"1": 5, "73": 2, "260": 4, "1210": 5, "1274": 3,
-                "1566": 5, "1721": 2, "1907": 4, "2571": 5, "3054": 3}
+    # # Teste das minhas avaliações
+    # my_rates = {"1": 5, "73": 2, "260": 4, "1210": 5, "1274": 3,
+    #             "1566": 5, "1721": 2, "1907": 4, "2571": 5, "3054": 3}
+    my_rates = {"2134": 3, "1265": 4, "1196": 5, "590": 4, "736": 1,
+                "592": 5, "593": 4, "2088": 3, "3040": 5, "2243": 3}
 
     # Parâmetros de comparação
     taxa_acerto = erro_quadratico = kappa = 0
