@@ -2,6 +2,7 @@
 # !/usr/bin/env python
 u"""Árvore de decisão para avaliação."""
 import math
+import copy
 
 '''
     Estrutura de dados da árvore de decisão
@@ -14,43 +15,43 @@ def tab(n):
         print '\t',
 
 
-def print_node(node, depth):
+def print_node(node, attr, depth):
     u"""Imprime os nós recursivamente."""
     tab(depth)
+    print node.number,
     if node.rate is not None:
-        print "<leaf>[" + node.father.attribute + "]",
+        print "<leaf>[" + attr + "]",
         print "\tdec: " + str(node.decision),
         print "\trat: " + str(node.rate),
         print "\tquo: " + str(node.rates)
-    elif node.father is not None:
-        print "<node> [" + node.father.attribute + "]",
+    elif attr is not None:
+        print "<node> [" + attr + "]",
         print "\tdec: " + str(node.decision)
     else:
         print "<root>"
 
     for i, child in enumerate(node.children):
-        print_node(child, depth + 1)
+        print_node(child, node.attribute, depth + 1)
 
 
 class Node(object):
     u"""Nó de decisão da árvore."""
 
+    number = 0
+
     def __init__(self):
         u"""Inicializa Nó."""
         self.children = []
         self.attribute = self.decision = \
-            self.rate = self.rates = self.father = None
+            self.rate = self.rates = None
+        self.number = Node.number
+        Node.number += 1
 
-    def parent(self, children, attribute):
+    def node(self, children, attribute, rates):
         u"""Inicializa Nó."""
         self.attribute = attribute
         self.children = children
-        return self
-
-    def child(self, father, decision):
-        u"""Propriedade de decisão."""
-        self.father = father
-        self.decision = decision
+        self.rates = rates
         return self
 
     def leaf(self, rate, rates):
@@ -68,7 +69,7 @@ def map_ratings(lines):
     u"""Contabiliza avaliações."""
     map = {}
     for line in lines:
-        (user, movie, rate, _) = line.split("::")
+        user, movie, rate, _ = line.split("::")
         if not (movie in map):
             map[movie] = []
         map[movie].append((user, rate, movie))
@@ -102,15 +103,17 @@ def gen_tree(ratings, attributes, default):
     else:
         # Variável que minimiza entropia
         best = choose_attr(ratings, attributes)
-        tree = Node().parent([], best)
+        tree = Node().node([], best, len(ratings))
         m = mean_value(ratings)
         # Gera subárvores de decisão
         for value in attributes[best]:
-            subratings = filter(lambda rate:
-                                is_value(rate, best, value), ratings)
+            subratings = filter(
+                lambda rate: is_value(rate, best, value),
+                ratings)
             subattributes = {key: v for key,
                              v in attributes.items() if key != best}
-            subtree = gen_tree(subratings, subattributes, m).child(tree, value)
+            subtree = gen_tree(subratings, subattributes, m)
+            subtree.decision = value
             tree.children.append(subtree)
     return tree
 
@@ -119,17 +122,60 @@ def gen_tree(ratings, attributes, default):
 '''
 
 
-def cross_val(tree, ratings):
+def cut_node(tree, ratings, number):
+    u"""Poda um determinado nó da árvore."""
+    if tree.number == number and tree.decision is not None:
+        # Faz o coto da árvore
+        tree.rate = mean_value(ratings)
+        tree.children = []
+        return
+
+    for child in tree.children:
+        cut_node(child, ratings, number)
+
+
+def should_cut(tree1, tree2, ratings):
+    u"""Compara duas árvores de decisão."""
+    quad1, quad2 = 0, 0
+    for rate in ratings:
+        person = {
+            "Gender": users[rate[0]][0],
+            "Age": users[rate[0]][1],
+            "Occupation": users[rate[0]][2],
+            "Genre": movies[rate[2]][1].split('|'),
+            "Movie": rate[2]
+        }
+        aval1, aval2 = navigate(tree1, person), navigate(tree2, person)
+        quad1 += (aval1 - int(rate[1]))**2
+        quad2 += (aval2 - int(rate[1]))**2
+
+    # print "1: " + str(quad1) + " 2: " + str(quad2)
+    return tree1 if quad1 < quad2 else tree2
+
+
+def cross_val(tree, node, ratings):
     u"""Realiza validação cruzada."""
-    changed = True
-    while changed:
-        changed = False
+    if node.rate is None and len(ratings) > 0:
+        # Faz o backup
+        back_tree = copy.deepcopy(tree)
+        cut_node(tree, ratings, node.number)
 
-        # for sub_leaf in sub_leafs:
-        #     if better:
-        #         tree = cross_val(new_tree, ratings)
+        # Determina qual é a melhor
+        tree = should_cut(back_tree, tree, ratings)
 
-    return tree
+        # Continua recursivamente
+        for child in node.children:
+            subratings = filter(
+                lambda rate: is_value(rate, node.attribute, child.decision),
+                ratings)
+            tree, node.child = cross_val(tree, child, subratings)
+
+    return tree, node
+
+
+def cross_tree(tree, ratings):
+    u"""Realiza validação cruzada."""
+    return cross_val(tree, tree, ratings)[0]
 
 
 '''
@@ -205,7 +251,7 @@ def get_attribute_value(rate, attr):
 
 def similar_rates(ratings):
     u"""Verifica se avaliações são similares."""
-    (rates, major) = major_value(ratings)
+    rates, major = major_value(ratings)
     return rates[major - 1] >= 0.8 * sum(rates)
 
 
@@ -237,10 +283,11 @@ def avaliate(movie, person):
     training = ratings[movie][0::2]  # Pares
     # Gerando a árvore de decisões
     decision_tree = gen_tree(database, attributes, 3)
+    # print_node(decision_tree, None, 0)
     # Treinando a árvore de decisões
-    decision_tree = cross_val(decision_tree, training)
+    decision_tree = cross_tree(decision_tree, training)
     # Imprimindo a árvore de decisões
-    # print_node(decision_tree, 0)
+    # print_node(decision_tree, None, 0)
     # Navegando na árvore de decisões
     return navigate(decision_tree, person)
 
@@ -253,8 +300,10 @@ def avaliate(movie, person):
 def analyse():
     u"""Analisa o classificador."""
     # Teste das minhas avaliações
-    my_rates = {"1": 5, "73": 2, "260": 4, "1210": 5, "1274": 3,
-                "1566": 5, "1721": 2, "1907": 4, "2571": 5, "3054": 3}
+    # my_rates = {"1": 5, "73": 2, "260": 4, "1210": 5, "1274": 3,
+    #             "1566": 5, "1721": 2, "1907": 4, "2571": 5, "3054": 3}
+    my_rates = {"2134": 3, "1265": 4, "1196": 5, "590": 4, "736": 1,
+                "592": 5, "593": 4, "2088": 3, "3040": 5, "2243": 3}
 
     # Parâmetros de comparação
     taxa_acerto = erro_quadratico = kappa = 0
