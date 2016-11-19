@@ -15,3 +15,6 @@
 
 * Lab3
 	* Classificador de filmes
+
+* Lab4
+	* Previsão de vazão de rios usando Redes Neurais
