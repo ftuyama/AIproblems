@@ -231,6 +231,7 @@ def monte_carlo(population, steps, depth):
     for i in range(depth):
         (solution, generations, gen_restrs, max_steps) =\
             diff_evolution(population, steps)
+        total_steps += max_steps
 
     stop = timeit.default_timer()
     print "Média de tempo: " + str(((stop - start) * 1.0) / depth)
@@ -248,4 +249,4 @@ if demo:
     (solution, generations, gen_restrs, steps) = diff_evolution(40, 100)
     log_performance(steps, solution, gen_restrs)
 else:
-    monte_carlo(40, 100, 100)
+    monte_carlo(40, 100, 20)
