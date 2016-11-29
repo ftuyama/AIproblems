@@ -129,8 +129,8 @@ print "*                                   *"
 print "*       Problema das N-Rainhas      *"
 print "*                                   *"
 print "*************************************"
-N = 30
-demo = False
+N = 8
+demo = True
 if demo:
     board = [0] * N
     (solution, steps) = hill_climbing(board, 1000)
