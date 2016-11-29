@@ -5,16 +5,19 @@
 	Desenvolvedor: Felipe Tuyama
 
 * Lab1
-	* Problema do menor caminho (Algoritmos Greedy & A*)
-	* Problema AI para Jogo da Velha
+	* Problema do menor caminho [Algoritmos Greedy & A*]
+	* AI para Jogo da Velha [Minimax]
 
 * Lab2
-	* Problema das N-Rainhas
-	* Máximo global de função
-	* Problema dos vizinhos de Einstein
+	* Problema das N-Rainhas [Hill Climbing]
+	* Máximo global de função [Têmpera simulada]
+	* Problema dos vizinhos de Einstein [Backtracking]
 
 * Lab3
-	* Classificador de filmes
+	* Classificador de filmes [Árvore de Decisões]
 
 * Lab4
-	* Previsão de vazão de rios usando Redes Neurais
+	* Previsão de vazão de rios [Redes Neurais]
+
+* Lab5
+	* Problema das N-Rainhas [Algoritmo Genético]
